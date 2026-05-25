@@ -1,4 +1,0 @@
-Next step: run the 10x-prd skill using the shape-notes.md file.
-
-In GitHub Copilot, invoke:
-  /10x-prd @context/foundation/shape-notes.md
