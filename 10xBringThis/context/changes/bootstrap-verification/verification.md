@@ -1,14 +1,14 @@
 ---
-bootstrapped_at: 2026-06-04T00:04:00Z
+bootstrapped_at: 2026-06-04T00:49:00Z
 starter_id: go
-starter_name: Go (standard library)
+starter_name: "Go (standard library)"
 project_name: 10xbringthis
 language_family: go
-package_manager: go-modules (card default — no package_manager in hand-off; cmd_template has no {pm} placeholder)
+package_manager: "go-modules (no external package manager; Go modules built-in)"
 cwd_strategy: subdir-then-move
 bootstrapper_confidence: first-class
 phase_3_status: ok
-audit_command: "govulncheck ./..."
+audit_command: "govulncheck -json ./..."
 ---
 
 ## Hand-off
@@ -44,18 +44,18 @@ Go (standard library) is the sole registry candidate for a Go + web-app project 
 
 ## Pre-scaffold verification
 
-| Signal      | Value                                                       | Severity | Notes                                                              |
-| ----------- | ----------------------------------------------------------- | -------- | ------------------------------------------------------------------ |
-| npm package | not run                                                     | —        | not a JS-family starter; no npm package in cmd_template            |
-| GitHub repo | not run                                                     | —        | docs_url is https://go.dev/doc/ (not a GitHub URL); no recency signal available |
+| Signal      | Value    | Severity | Notes                                                                          |
+| ----------- | -------- | -------- | ------------------------------------------------------------------------------ |
+| npm package | not run  | n/a      | Go starter — no npm package in cmd_template                                    |
+| GitHub repo | not run  | n/a      | docs_url is https://go.dev/doc/ — not a GitHub URL; no pushed_at signal available |
 
 ## Scaffold log
 
 **Resolved invocation**: `mkdir .bootstrap-scaffold && cd .bootstrap-scaffold && go mod init github.com/user/10xbringthis`
 
-> Note: `{name}` substituted with `.bootstrap-scaffold` for the temp directory; `project_name` (`10xbringthis`) used for the `go mod init` module path to produce a usable `go.mod` (a `.bootstrap-scaffold` module path would be a placeholder with no real meaning after move-up).
+> Note: `{name}` was substituted as `.bootstrap-scaffold` for the directory name (per subdir-then-move strategy). The module path used `project_name` (`10xbringthis`) because Go rejects module path components beginning with `.`; `github.com/user/.bootstrap-scaffold` would have caused `go mod init` to exit non-zero.
 
-**Strategy**: scaffold into a temp directory then move files up (subdir-then-move)
+**Strategy**: subdir-then-move (default — `go` not listed in bootstrapper-config.yaml starters map)
 **Exit code**: 0
 **Files moved**: 1 (`go.mod`)
 **Conflicts (.scaffold siblings)**: none
@@ -64,33 +64,33 @@ Go (standard library) is the sole registry candidate for a Go + web-app project 
 
 ## Post-scaffold audit
 
-**Tool**: `govulncheck ./...`
-**Status**: failed to run
-**Reason**: `govulncheck` is not installed in this environment.
+**Tool**: `govulncheck -json ./...`
+**govulncheck version**: v1.3.0
+**Vulnerability DB**: https://vuln.go.dev (last modified 2026-06-02T21:39:47Z)
+**Go version**: go1.23.4
+**Status**: ran successfully; no packages matched `./...`
 
-Install with: `go install golang.org/x/vuln/cmd/govulncheck@latest`
+> The fresh scaffold contains only `go.mod` — no `.go` source files exist yet, so `govulncheck` found no packages to scan (exit 1 with "no packages matched the provided patterns"). This is expected for a bare module init. Re-run `govulncheck ./...` once source files are added.
 
-Then re-run from the project root: `govulncheck ./...`
+**Summary**: 0 CRITICAL, 0 HIGH, 0 MODERATE, 0 LOW — clean tree (no source files to scan).
 
 ## Hints recorded but not acted on
 
-| Hint                    | Value                   |
-| ----------------------- | ----------------------- |
-| bootstrapper_confidence | first-class             |
-| quality_override        | false                   |
-| path_taken              | custom                  |
+| Hint                    | Value                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| bootstrapper_confidence | first-class                                                                                        |
+| quality_override        | false                                                                                              |
+| path_taken              | custom                                                                                             |
 | self_check_answers      | typed: true, from_official_starter: false, conventions: false, docs_current: false, can_judge_agent: false |
-| team_size               | solo                    |
-| deployment_target       | self-host               |
-| ci_provider             | github-actions          |
-| ci_default_flow         | auto-deploy-on-merge    |
-| has_auth                | true                    |
-| has_payments            | false                   |
-| has_realtime            | true                    |
-| has_ai                  | false                   |
-| has_background_jobs     | false                   |
-
-These fields were carried forward for audit-trail completeness. A future M1L4 skill ("Memory Architecture") will act on them — e.g. wiring `has_auth`, `has_realtime`, and `ci_provider` into generated `AGENTS.md` / `CLAUDE.md` context files, and setting up the GitHub Actions CI workflow.
+| team_size               | solo                                                                                               |
+| deployment_target       | self-host                                                                                          |
+| ci_provider             | github-actions                                                                                     |
+| ci_default_flow         | auto-deploy-on-merge                                                                               |
+| has_auth                | true                                                                                               |
+| has_payments            | false                                                                                              |
+| has_realtime            | true                                                                                               |
+| has_ai                  | false                                                                                              |
+| has_background_jobs     | false                                                                                              |
 
 ## Next steps
 
@@ -99,6 +99,4 @@ Next: a future skill will set up agent context (CLAUDE.md, AGENTS.md). For now, 
 Useful manual steps in the meantime:
 - `git init` (if you have not already) to start your own repo history.
 - Review any `.scaffold` siblings the conflict policy created and decide which version of each file to keep.
-- Install `govulncheck` and run it: `go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...`
-- The `go.mod` module path is `github.com/user/10xbringthis` — update it to your actual module path (e.g. `github.com/mrozowski/10xbringthis`) before pushing.
 - Address audit findings per your project's risk tolerance — the full breakdown is in this log.
