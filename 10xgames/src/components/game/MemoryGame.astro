@@ -41,7 +41,7 @@ const preferences = getPreferences();
 
 	<!-- 4x4 Cards Grid Container -->
 	<main class="grid-container" id="cards-grid">
-		<!-- 16 Cards will be rendered and bound by client script -->
+		<!-- 16 Cards are rendered and bound by the client script -->
 	</main>
 
 	<!-- Game Over / Victory Modal Overlay -->
@@ -52,7 +52,7 @@ const preferences = getPreferences();
 			</div>
 			<div class="modal-body">
 				<p id="modal-message" class="modal-subtitle">All pairs matched in time!</p>
-				
+
 				<div class="modal-stats">
 					<div class="stat-row">
 						<span>Final Score:</span>
@@ -81,12 +81,15 @@ const preferences = getPreferences();
 		tickTimer,
 		flipCard,
 		resolveMismatch,
+		PREVIEW_SECONDS,
 		type GameState,
 	} from '../../lib/memory-game/engine';
-	import { getThemeSymbols } from '../../lib/memory-game/themes';
+	import { getThemeSymbols, type ThemeSymbol } from '../../lib/memory-game/themes';
 	import { playSound, initAudioContext } from '../../lib/sound';
 	import { getPreferences, setSoundEnabled } from '../../lib/preferences';
 	import { addScore } from '../../lib/scores';
+
+	const MISMATCH_COOLDOWN_MS = 800;
 
 	class MemoryGameIsland {
 		private root: HTMLElement;
@@ -110,7 +113,8 @@ const preferences = getPreferences();
 		private state!: GameState;
 		private previewInterval: number | null = null;
 		private roundInterval: number | null = null;
-		private symbolsMap: Map<string, { name: string; color: string; svgPath: string }> = new Map();
+		private mismatchTimeout: number | null = null;
+		private symbolsMap: Map<string, ThemeSymbol> = new Map();
 
 		constructor(root: HTMLElement) {
 			this.root = root;
@@ -131,28 +135,17 @@ const preferences = getPreferences();
 			this.timeBonusRow = root.querySelector('#stat-time-bonus-row') as HTMLElement;
 			this.btnPlayAgain = root.querySelector('#btn-play-again') as HTMLButtonElement;
 
-			this.initSymbols();
 			this.bindEvents();
 			this.startNewGame();
-		}
-
-		private initSymbols(): void {
-			const currentPrefs = getPreferences();
-			const symbols = getThemeSymbols(currentPrefs.theme);
-			this.symbolsMap.clear();
-			for (const sym of symbols) {
-				this.symbolsMap.set(sym.id, sym);
-			}
-			this.updateSoundIcon(currentPrefs.soundEnabled);
 		}
 
 		private bindEvents(): void {
 			this.soundToggleBtn.addEventListener('click', () => {
 				initAudioContext();
-				const current = getPreferences().soundEnabled;
-				setSoundEnabled(!current);
-				this.updateSoundIcon(!current);
-				if (!current) {
+				const enabled = !getPreferences().soundEnabled;
+				setSoundEnabled(enabled);
+				this.updateSoundIcon(enabled);
+				if (enabled) {
 					playSound('tick');
 				}
 			});
@@ -164,10 +157,8 @@ const preferences = getPreferences();
 				this.startNewGame();
 			});
 
-			// User gesture audio unlock
-			this.root.addEventListener('pointerdown', () => {
-				initAudioContext();
-			}, { once: true });
+			// Unlock the browser AudioContext on the first user gesture.
+			this.root.addEventListener('pointerdown', () => initAudioContext(), { once: true });
 		}
 
 		private updateSoundIcon(enabled: boolean): void {
@@ -176,61 +167,69 @@ const preferences = getPreferences();
 		}
 
 		public startNewGame(): void {
-			this.clearIntervals();
+			this.clearTimers();
+
 			const currentPrefs = getPreferences();
 			const symbols = getThemeSymbols(currentPrefs.theme);
-			const symbolIds = symbols.map((s) => s.id);
+			this.symbolsMap = new Map(symbols.map((symbol) => [symbol.id, symbol]));
+			this.updateSoundIcon(currentPrefs.soundEnabled);
 
-			this.state = createInitialGameState(symbolIds, 8);
+			this.state = createInitialGameState(
+				symbols.map((symbol) => symbol.id),
+				8,
+			);
+
 			this.renderGrid();
 			this.updateHUD();
+			this.hudTimer.classList.remove('pulse-danger');
 
 			this.previewBanner.classList.remove('hidden');
+			this.previewCountdown.textContent = String(PREVIEW_SECONDS);
 			this.previewProgressBar.style.width = '100%';
-			this.previewCountdown.textContent = '3';
 
-			// Start 3-second preview timer
 			this.previewInterval = window.setInterval(() => {
 				this.state = tickPreview(this.state);
+
 				if (this.state.status === 'preview') {
 					playSound('tick');
 					this.previewCountdown.textContent = String(this.state.previewSecondsRemaining);
-					const pct = (this.state.previewSecondsRemaining / 3) * 100;
-					this.previewProgressBar.style.width = `${pct}%`;
-				} else if (this.state.status === 'playing') {
-					this.clearIntervals();
-					this.previewBanner.classList.add('hidden');
-					this.updateCardFlipping();
-					this.startRoundTimer();
-					playSound('flip');
+					this.previewProgressBar.style.width = `${
+						(this.state.previewSecondsRemaining / PREVIEW_SECONDS) * 100
+					}%`;
+					return;
 				}
+
+				// Preview finished: hide every card and start the round.
+				this.clearTimers();
+				this.previewProgressBar.style.width = '0%';
+				this.previewBanner.classList.add('hidden');
+				this.syncCards();
+				playSound('flip');
+				this.startRoundTimer();
 			}, 1000);
 		}
 
 		private startRoundTimer(): void {
 			this.roundInterval = window.setInterval(() => {
-				if (this.state.status !== 'playing' && this.state.status !== 'checking') {
-					return;
-				}
-
 				this.state = tickTimer(this.state);
 				this.hudTimer.textContent = `${this.state.roundSecondsRemaining}s`;
 
-				if (this.state.roundSecondsRemaining <= 10 && this.state.roundSecondsRemaining > 0) {
-					this.hudTimer.classList.add('pulse-danger');
-					playSound('tick');
-				}
-
 				if (this.state.status === 'time_up') {
-					this.clearIntervals();
-					this.updateCardFlipping();
+					this.clearTimers();
+					this.syncCards();
 					playSound('gameover');
 					this.showGameOverModal();
+					return;
+				}
+
+				if (this.state.roundSecondsRemaining <= 10) {
+					this.hudTimer.classList.add('pulse-danger');
+					playSound('tick');
 				}
 			}, 1000);
 		}
 
-		private clearIntervals(): void {
+		private clearTimers(): void {
 			if (this.previewInterval !== null) {
 				clearInterval(this.previewInterval);
 				this.previewInterval = null;
@@ -239,34 +238,31 @@ const preferences = getPreferences();
 				clearInterval(this.roundInterval);
 				this.roundInterval = null;
 			}
+			if (this.mismatchTimeout !== null) {
+				clearTimeout(this.mismatchTimeout);
+				this.mismatchTimeout = null;
+			}
 		}
 
 		private renderGrid(): void {
 			this.gridEl.innerHTML = '';
+
 			this.state.cards.forEach((card, index) => {
 				const symbol = this.symbolsMap.get(card.symbolId);
 				const cardButton = document.createElement('button');
 				cardButton.className = 'card-item';
 				cardButton.type = 'button';
 				cardButton.dataset.index = String(index);
-				cardButton.setAttribute('aria-label', `Card ${index + 1}: ${symbol ? symbol.name : 'Unknown'}`);
-
+				cardButton.setAttribute('aria-label', `Card ${index + 1}`);
 				cardButton.innerHTML = `
-					<div class="card-inner ${card.isFlipped ? 'is-flipped' : ''}">
-						<!-- Card Back (Logo & Pattern) -->
-						<div class="card-face card-back">
-							<div class="card-back-pattern">
-								<span class="pixel-star">✦</span>
-							</div>
-						</div>
-						<!-- Card Front (Symbol) -->
-						<div class="card-face card-front" style="--symbol-color: ${symbol?.color || '#00f0ff'}">
-							<svg class="symbol-svg" viewBox="0 0 24 24" width="36" height="36" fill="currentColor">
-								${symbol?.svgPath || ''}
-							</svg>
-							<span class="symbol-name">${symbol?.name || ''}</span>
-						</div>
-					</div>
+					<span class="card-inner${card.isFlipped ? ' is-flipped' : ''}">
+						<span class="card-face card-back"></span>
+						<span class="card-face card-front" style="--symbol-color: ${symbol?.color ?? '#00f0ff'}">
+							<svg class="symbol-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${
+								symbol?.svgPath ?? ''
+							}</svg>
+						</span>
+					</span>
 				`;
 
 				cardButton.addEventListener('click', () => this.handleCardClick(index));
@@ -280,46 +276,55 @@ const preferences = getPreferences();
 			}
 
 			const { nextState, event } = flipCard(this.state, index);
+			if (!event) {
+				return;
+			}
+
 			this.state = nextState;
-			this.updateCardFlipping();
+			this.syncCards();
 			this.updateHUD();
 
-			if (event === 'flip') {
-				playSound('flip');
-			} else if (event === 'match') {
-				playSound('match');
-			} else if (event === 'completed') {
-				this.clearIntervals();
-				playSound('victory');
-				// Automatically save score
-				addScore({ score: this.state.score });
-				this.showVictoryModal();
-			} else if (event === 'mismatch') {
-				playSound('mismatch');
-				// Lock clicks and flip back after 800ms cooldown
-				window.setTimeout(() => {
-					this.state = resolveMismatch(this.state);
-					this.updateCardFlipping();
-					this.updateHUD();
-				}, 800);
+			switch (event) {
+				case 'flip':
+					playSound('flip');
+					break;
+
+				case 'match':
+					playSound('match');
+					break;
+
+				case 'completed':
+					this.clearTimers();
+					playSound('victory');
+					addScore({ score: this.state.score });
+					this.showVictoryModal();
+					break;
+
+				case 'mismatch':
+					playSound('mismatch');
+					this.mismatchTimeout = window.setTimeout(() => {
+						this.mismatchTimeout = null;
+						this.state = resolveMismatch(this.state);
+						this.syncCards();
+					}, MISMATCH_COOLDOWN_MS);
+					break;
 			}
 		}
 
-		private updateCardFlipping(): void {
-			const cardEls = this.gridEl.querySelectorAll('.card-item');
-			this.state.cards.forEach((card, idx) => {
-				const el = cardEls[idx];
-				if (!el) return;
+		/** Reconciles every card element with the engine's card state. */
+		private syncCards(): void {
+			const cardEls = this.gridEl.querySelectorAll<HTMLButtonElement>('.card-item');
+
+			this.state.cards.forEach((card, index) => {
+				const el = cardEls[index];
+				if (!el) {
+					return;
+				}
+
 				const inner = el.querySelector('.card-inner');
-				if (inner) {
-					inner.classList.toggle('is-flipped', card.isFlipped || card.isMatched);
-					inner.classList.toggle('is-matched', card.isMatched);
-				}
-				if (card.isMatched) {
-					el.setAttribute('disabled', 'true');
-				} else {
-					el.removeAttribute('disabled');
-				}
+				inner?.classList.toggle('is-flipped', card.isFlipped || card.isMatched);
+				inner?.classList.toggle('is-matched', card.isMatched);
+				el.disabled = card.isMatched;
 			});
 		}
 
@@ -334,8 +339,8 @@ const preferences = getPreferences();
 			this.modalTitle.className = 'modal-title neon-green';
 			this.modalMessage.textContent = 'All 8 pairs matched in time!';
 			this.modalFinalScore.textContent = String(this.state.score);
-			this.timeBonusRow.classList.remove('hidden');
 			this.modalTimeBonus.textContent = `+${this.state.roundSecondsRemaining * 10} pts`;
+			this.timeBonusRow.classList.remove('hidden');
 			this.modal.classList.remove('hidden');
 		}
 
@@ -349,15 +354,19 @@ const preferences = getPreferences();
 		}
 	}
 
-	// Mount the island on DOM load
 	const root = document.getElementById('memory-game-root');
 	if (root) {
 		new MemoryGameIsland(root);
 	}
 </script>
 
-<style>
-	.memory-game-wrapper {
+<!--
+	These styles are intentionally global but namespaced under `#memory-game-root`.
+	Card elements are created at runtime by the script above, so they never receive
+	Astro's scoped-style attribute — scoped rules would silently not apply to them.
+-->
+<style is:global>
+	#memory-game-root {
 		width: 100%;
 		max-width: 520px;
 		margin: 0 auto;
@@ -368,8 +377,12 @@ const preferences = getPreferences();
 		-webkit-user-select: none;
 	}
 
-	/* HUD Header */
-	.game-hud {
+	#memory-game-root .hidden {
+		display: none !important;
+	}
+
+	/* HUD */
+	#memory-game-root .game-hud {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr) auto;
 		gap: 0.5rem;
@@ -381,13 +394,13 @@ const preferences = getPreferences();
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 	}
 
-	.hud-item {
+	#memory-game-root .hud-item {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 	}
 
-	.hud-label {
+	#memory-game-root .hud-label {
 		font-family: ui-monospace, 'Courier New', monospace;
 		font-size: 0.65rem;
 		font-weight: 700;
@@ -395,48 +408,63 @@ const preferences = getPreferences();
 		letter-spacing: 0.05em;
 	}
 
-	.hud-value {
+	#memory-game-root .hud-value {
 		font-family: ui-monospace, 'Courier New', monospace;
 		font-size: 1.15rem;
 		font-weight: 800;
-		letter-spacing: 0.02em;
 	}
 
-	/* Neon Colors */
-	.neon-cyan { color: #00f0ff; text-shadow: 0 0 8px rgba(0, 240, 255, 0.4); }
-	.neon-pink { color: #ff007f; text-shadow: 0 0 8px rgba(255, 0, 127, 0.4); }
-	.neon-green { color: #00ff9f; text-shadow: 0 0 8px rgba(0, 255, 159, 0.4); }
-	.neon-yellow { color: #ffe600; text-shadow: 0 0 8px rgba(255, 230, 0, 0.4); }
-
-	.pulse-danger {
-		animation: pulseRed 0.6s infinite alternate;
+	#memory-game-root .neon-cyan {
+		color: #00f0ff;
+		text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+	}
+	#memory-game-root .neon-pink {
+		color: #ff007f;
+		text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+	}
+	#memory-game-root .neon-green {
+		color: #00ff9f;
+		text-shadow: 0 0 8px rgba(0, 255, 159, 0.4);
+	}
+	#memory-game-root .neon-yellow {
+		color: #ffe600;
+		text-shadow: 0 0 8px rgba(255, 230, 0, 0.4);
 	}
 
-	@keyframes pulseRed {
-		0% { color: #ffe600; text-shadow: 0 0 8px #ffe600; }
-		100% { color: #ff4444; text-shadow: 0 0 12px #ff4444; transform: scale(1.08); }
+	#memory-game-root .pulse-danger {
+		animation: mgPulseDanger 0.6s infinite alternate;
 	}
 
-	/* Preview Countdown Bar */
-	.preview-banner {
+	@keyframes mgPulseDanger {
+		0% {
+			color: #ffe600;
+			text-shadow: 0 0 8px #ffe600;
+		}
+		100% {
+			color: #ff4444;
+			text-shadow: 0 0 12px #ff4444;
+		}
+	}
+
+	/* Preview banner */
+	#memory-game-root .preview-banner {
 		background: #16202c;
 		border: 1px solid #00ff9f;
 		border-radius: 6px;
 		padding: 0.5rem 0.8rem;
 		text-align: center;
 		box-shadow: 0 0 10px rgba(0, 255, 159, 0.2);
-		animation: fadeIn 0.3s ease;
 	}
 
-	.preview-text {
+	#memory-game-root .preview-text {
 		font-family: ui-monospace, monospace;
 		font-size: 0.85rem;
-		font-weight: bold;
+		font-weight: 700;
 		color: #d1e4ff;
 		margin-bottom: 0.4rem;
 	}
 
-	.preview-progress-track {
+	#memory-game-root .preview-progress-track {
 		width: 100%;
 		height: 4px;
 		background: #090e16;
@@ -444,120 +472,132 @@ const preferences = getPreferences();
 		overflow: hidden;
 	}
 
-	.preview-progress-fill {
+	#memory-game-root .preview-progress-fill {
 		height: 100%;
 		background: #00ff9f;
 		box-shadow: 0 0 6px #00ff9f;
 		transition: width 1s linear;
 	}
 
-	/* 4x4 Grid */
-	.grid-container {
+	/* 4x4 grid */
+	#memory-game-root .grid-container {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
 		gap: 0.6rem;
-		aspect-ratio: 1 / 1;
 		width: 100%;
-		perspective: 1000px;
 	}
 
-	/* Card Item */
-	.card-item {
+	#memory-game-root .card-item {
+		display: block;
 		background: transparent;
 		border: none;
 		padding: 0;
-		cursor: pointer;
+		margin: 0;
+		width: 100%;
 		aspect-ratio: 1 / 1;
-		perspective: 1000px;
+		perspective: 900px;
+		cursor: pointer;
 		outline: none;
+		-webkit-tap-highlight-color: transparent;
 	}
 
-	.card-item:focus-visible .card-inner {
-		box-shadow: 0 0 0 2px #00f0ff;
+	#memory-game-root .card-item:disabled {
+		cursor: default;
 	}
 
-	.card-inner {
+	#memory-game-root .card-inner {
 		position: relative;
+		display: block;
 		width: 100%;
 		height: 100%;
 		border-radius: 8px;
 		transform-style: preserve-3d;
+		-webkit-transform-style: preserve-3d;
 		transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+		will-change: transform;
 	}
 
-	.card-inner.is-flipped {
+	#memory-game-root .card-inner.is-flipped {
 		transform: rotateY(180deg);
 	}
 
-	.card-inner.is-matched {
-		transform: rotateY(180deg);
-		animation: matchBounce 0.4s ease;
+	#memory-game-root .card-item:focus-visible .card-inner {
+		box-shadow: 0 0 0 3px #00f0ff;
 	}
 
-	@keyframes matchBounce {
-		0% { transform: rotateY(180deg) scale(1); }
-		50% { transform: rotateY(180deg) scale(1.08); }
-		100% { transform: rotateY(180deg) scale(1); }
-	}
-
-	.card-face {
+	#memory-game-root .card-face {
 		position: absolute;
 		inset: 0;
-		border-radius: 8px;
-		backface-visibility: hidden;
-		-webkit-backface-visibility: hidden;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		border-radius: 8px;
 		border: 2px solid #232d3d;
+		backface-visibility: hidden;
+		-webkit-backface-visibility: hidden;
+		overflow: hidden;
 	}
 
-	/* Card Back */
-	.card-back {
-		background: #161c26;
-		background-image: radial-gradient(#263447 15%, transparent 16%);
-		background-size: 10px 10px;
-		color: #43546b;
+	/* Card back */
+	#memory-game-root .card-back {
+		background-color: #161c26;
+		background-image:
+			linear-gradient(135deg, rgba(0, 240, 255, 0.08) 25%, transparent 25%),
+			linear-gradient(225deg, rgba(255, 0, 127, 0.08) 25%, transparent 25%),
+			radial-gradient(circle at center, rgba(0, 240, 255, 0.14) 0 18%, transparent 19%);
+		background-size: 12px 12px, 12px 12px, 100% 100%;
+		box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.55);
 	}
 
-	.card-item:hover .card-back {
+	#memory-game-root .card-item:not(:disabled):hover .card-back {
 		border-color: #00f0ff;
-		box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+		box-shadow:
+			inset 0 0 14px rgba(0, 0, 0, 0.55),
+			0 0 10px rgba(0, 240, 255, 0.35);
 	}
 
-	.pixel-star {
-		font-size: 1.2rem;
-		opacity: 0.6;
-	}
-
-	/* Card Front */
-	.card-front {
-		background: #111620;
+	/* Card front */
+	#memory-game-root .card-front {
+		background:
+			radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.06), transparent 70%),
+			#0e141d;
 		transform: rotateY(180deg);
-		color: var(--symbol-color, #00f0ff);
 		border-color: var(--symbol-color, #00f0ff);
-		box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
-		padding: 0.3rem;
-		gap: 0.2rem;
+		box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.6);
+		padding: 12%;
 	}
 
-	.symbol-svg {
-		filter: drop-shadow(0 0 6px currentColor);
+	#memory-game-root .card-inner.is-matched .card-front {
+		box-shadow:
+			inset 0 0 14px rgba(0, 0, 0, 0.6),
+			0 0 12px var(--symbol-color, #00f0ff);
 	}
 
-	.symbol-name {
-		font-family: ui-monospace, monospace;
-		font-size: 0.6rem;
-		font-weight: 700;
-		text-align: center;
-		color: #e2e8f0;
-		line-height: 1;
+	#memory-game-root .card-inner.is-matched {
+		animation: mgMatchPop 0.4s ease;
+	}
+
+	@keyframes mgMatchPop {
+		0% {
+			transform: rotateY(180deg) scale(1);
+		}
+		50% {
+			transform: rotateY(180deg) scale(1.08);
+		}
+		100% {
+			transform: rotateY(180deg) scale(1);
+		}
+	}
+
+	#memory-game-root .symbol-svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+		filter: drop-shadow(0 0 5px color-mix(in srgb, var(--symbol-color, #00f0ff) 55%, transparent));
 	}
 
 	/* Buttons */
-	.retro-btn {
+	#memory-game-root .retro-btn {
 		background: #1a2230;
 		border: 1px solid #33445c;
 		border-radius: 6px;
@@ -568,18 +608,23 @@ const preferences = getPreferences();
 		transition: all 0.15s ease;
 	}
 
-	.retro-btn:hover {
+	#memory-game-root .retro-btn:hover {
 		background: #253347;
 		border-color: #00f0ff;
 		color: #00f0ff;
 	}
 
-	.icon-btn {
+	#memory-game-root .icon-btn {
 		padding: 0.4rem 0.6rem;
 		font-size: 1rem;
+		line-height: 1;
 	}
 
-	.primary-btn {
+	#memory-game-root .retro-btn.muted {
+		opacity: 0.55;
+	}
+
+	#memory-game-root .primary-btn {
 		padding: 0.8rem 1.6rem;
 		font-size: 0.95rem;
 		background: #00ff9f;
@@ -588,7 +633,7 @@ const preferences = getPreferences();
 		box-shadow: 0 0 12px rgba(0, 255, 159, 0.4);
 	}
 
-	.primary-btn:hover {
+	#memory-game-root .primary-btn:hover {
 		background: #00f0ff;
 		border-color: #00f0ff;
 		color: #090e16;
@@ -597,7 +642,7 @@ const preferences = getPreferences();
 	}
 
 	/* Modal */
-	.modal-overlay {
+	#memory-game-root .modal-overlay {
 		position: fixed;
 		inset: 0;
 		background: rgba(5, 8, 14, 0.85);
@@ -605,12 +650,12 @@ const preferences = getPreferences();
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 100;
+		z-index: 1000;
 		padding: 1rem;
-		animation: fadeIn 0.2s ease;
+		animation: mgFadeIn 0.2s ease;
 	}
 
-	.modal-card {
+	#memory-game-root .modal-card {
 		background: #111620;
 		border: 2px solid #2a374a;
 		border-radius: 12px;
@@ -618,23 +663,25 @@ const preferences = getPreferences();
 		width: 100%;
 		max-width: 380px;
 		text-align: center;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.2);
+		box-shadow:
+			0 10px 30px rgba(0, 0, 0, 0.8),
+			0 0 20px rgba(0, 240, 255, 0.2);
 	}
 
-	.modal-title {
+	#memory-game-root .modal-title {
 		font-family: ui-monospace, monospace;
 		font-size: 1.8rem;
 		font-weight: 900;
 		margin: 0 0 0.5rem 0;
 	}
 
-	.modal-subtitle {
+	#memory-game-root .modal-subtitle {
 		color: #94a3b8;
 		font-size: 0.9rem;
 		margin: 0 0 1.5rem 0;
 	}
 
-	.modal-stats {
+	#memory-game-root .modal-stats {
 		background: #0b0f16;
 		border: 1px solid #1c2736;
 		border-radius: 8px;
@@ -646,35 +693,42 @@ const preferences = getPreferences();
 		font-family: ui-monospace, monospace;
 	}
 
-	.stat-row {
+	#memory-game-root .stat-row {
 		display: flex;
 		justify-content: space-between;
 		font-size: 0.95rem;
 		color: #cbd5e1;
 	}
 
-	.hidden {
-		display: none !important;
-	}
-
-	@keyframes fadeIn {
-		from { opacity: 0; }
-		to { opacity: 1; }
+	@keyframes mgFadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	@media (max-width: 480px) {
-		.grid-container {
+		#memory-game-root .grid-container {
 			gap: 0.4rem;
 		}
-		.symbol-svg {
-			width: 28px;
-			height: 28px;
-		}
-		.symbol-name {
-			font-size: 0.5rem;
-		}
-		.hud-value {
+		#memory-game-root .hud-value {
 			font-size: 1rem;
+		}
+		#memory-game-root .card-front {
+			padding: 9%;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#memory-game-root .card-inner,
+		#memory-game-root .preview-progress-fill {
+			transition: none;
+		}
+		#memory-game-root .card-inner.is-matched,
+		#memory-game-root .pulse-danger {
+			animation: none;
 		}
 	}
 </style>
