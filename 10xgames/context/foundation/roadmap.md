@@ -43,7 +43,7 @@ The product promises instant, private play for a short break: a player should be
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 | ----- | ---------------------- | --------------------------------- | ---------------- | -------------- | -------- |
 | F-01 | local-score-contract | (foundation) track theme choices and locally saved scores under a frictionless name flow | — | FR-003, FR-007, US-02 | done |
-| S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | ready |
+| S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | in-progress |
 | S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | proposed |
 
 ## Baseline
@@ -85,7 +85,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Unknowns:**
   - No major product unknowns remain in the PRD; if a new theme or sound requirement appears, it should be treated as a roadmap-wide decision. Owner: team. Block: no.
 - **Risk:** If the first round is not reliably playable across mobile and desktop layouts, the product cannot validate its core promise before the rest of the feature work expands.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-02: Player can save and replay a completed-round score locally
 
