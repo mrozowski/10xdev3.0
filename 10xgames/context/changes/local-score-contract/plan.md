@@ -243,8 +243,8 @@ Not applicable — this is a net-new contract with no prior stored data format t
 
 #### Automated
 
-- [ ] 1.1 npm install completes cleanly with new dev dependencies
-- [ ] 1.2 npm run test runs with exit code 0 (0 tests found)
+- [x] 1.1 npm install completes cleanly with new dev dependencies
+- [x] 1.2 npm run test runs with exit code 0 (0 tests found)
 
 ### Phase 2: Shared storage safety wrapper
 

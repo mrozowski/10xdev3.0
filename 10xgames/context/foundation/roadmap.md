@@ -42,7 +42,7 @@ The product promises instant, private play for a short break: a player should be
 
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 | ----- | ---------------------- | --------------------------------- | ---------------- | -------------- | -------- |
-| F-01 | local-score-contract | (foundation) track theme choices and locally saved scores under a frictionless name flow | — | FR-003, FR-007, US-02 | planning |
+| F-01 | local-score-contract | (foundation) track theme choices and locally saved scores under a frictionless name flow | — | FR-003, FR-007, US-02 | in-progress |
 | S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | ready |
 | S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | proposed |
 
@@ -70,7 +70,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** The first user-facing loop only works if the app can store score names and theme choices locally without adding backend complexity or blocking replay.
-- **Status:** planning
+- **Status:** in-progress
 
 ## Slices
 
