@@ -257,16 +257,16 @@ Not applicable — this is a net-new contract with no prior stored data format t
 
 #### Automated
 
-- [x] 3.1 npm run test passes for src/lib/preferences.test.ts
-- [x] 3.2 npm run astro -- check reports no new type errors
+- [x] 3.1 npm run test passes for src/lib/preferences.test.ts — ceec955
+- [x] 3.2 npm run astro -- check reports no new type errors — ceec955
 
 ### Phase 4: Scores contract (top-10 list)
 
 #### Automated
 
-- [ ] 4.1 npm run test passes for src/lib/scores.test.ts (full suite)
-- [ ] 4.2 npm run astro -- check reports no new type errors
+- [x] 4.1 npm run test passes for src/lib/scores.test.ts (full suite)
+- [x] 4.2 npm run astro -- check reports no new type errors
 
 #### Manual
 
-- [ ] 4.3 Console-verified persistence across reload and silent failure when localStorage throws
+- [x] 4.3 Console-verified persistence across reload and silent failure when localStorage throws
