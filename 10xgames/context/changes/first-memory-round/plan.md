@@ -343,27 +343,27 @@ None. Replaces the temporary Astro starter boilerplate with the initial game cat
 
 #### Automated
 
-- [x] 4.1 Astro typecheck passes: npm run astro -- check
-- [x] 4.2 Full test suite passes: npm run test
+- [x] 4.1 Astro typecheck passes: npm run astro -- check — af36eff
+- [x] 4.2 Full test suite passes: npm run test — af36eff
 
 #### Manual
 
-- [x] 4.3 Cards flip with smooth 60fps 3D rotation without visual glitching
-- [x] 4.4 3-second preview reveals cards face-up, counts down, then flips face-down
-- [x] 4.5 Matching pairs stay face-up and trigger match sound; mismatches flip back after brief cooldown
-- [x] 4.6 Victory screen shows final calculated score and saves score to local list
+- [x] 4.3 Cards flip with smooth 60fps 3D rotation without visual glitching — af36eff
+- [x] 4.4 3-second preview reveals cards face-up, counts down, then flips face-down — af36eff
+- [x] 4.5 Matching pairs stay face-up and trigger match sound; mismatches flip back after brief cooldown — af36eff
+- [x] 4.6 Victory screen shows final calculated score and saves score to local list — af36eff
 
 ### Phase 5: Landing Page & Catalogue Shell Integration
 
 #### Automated
 
-- [ ] 5.1 Typecheck passes: npm run astro -- check
-- [ ] 5.2 Production build succeeds: npm run build
-- [ ] 5.3 Unit tests pass: npm run test
+- [x] 5.1 Typecheck passes: npm run astro -- check
+- [x] 5.2 Production build succeeds: npm run build
+- [x] 5.3 Unit tests pass: npm run test
 
 #### Manual
 
-- [ ] 5.4 Open preview or dev server: landing page displays retro arcade catalogue
-- [ ] 5.5 Clicking Play Memory Cards launches the game smoothly on desktop and mobile viewport sizes
-- [ ] 5.6 Audio plays on user tap/click when sound is enabled; mute button silences audio
-- [ ] 5.7 Completing a game round updates the high score list
+- [x] 5.4 Open preview or dev server: landing page displays retro arcade catalogue
+- [x] 5.5 Clicking Play Memory Cards launches the game smoothly on desktop and mobile viewport sizes
+- [x] 5.6 Audio plays on user tap/click when sound is enabled; mute button silences audio
+- [x] 5.7 Completing a game round updates the high score list

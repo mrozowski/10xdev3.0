@@ -1,11 +1,211 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import MemoryGame from '../components/game/MemoryGame.astro';
+import { getScores } from '../lib/scores';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const scores = getScores();
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="10x Games — Retro Game Collection">
+	<div class="site-container">
+		<!-- Header / Logo -->
+		<header class="retro-header">
+			<div class="logo-badge">
+				<span class="pixel-brand">10X</span>
+				<span class="arcade-title">GAMES</span>
+			</div>
+			<p class="tagline">Instant, private, retro browser games.</p>
+		</header>
+
+		<!-- Main Game Area & Catalogue Switcher -->
+		<div id="view-game" class="game-view-container">
+			<div class="game-top-bar">
+				<h1 class="active-game-heading">MEMORY CARDS</h1>
+			</div>
+			<MemoryGame />
+		</div>
+
+		<!-- High Scores & Footer -->
+		<footer class="retro-footer">
+			<section class="scores-panel">
+				<h3 class="scores-heading">TOP SCORES</h3>
+				<ul id="high-scores-list" class="scores-list">
+					{scores.length === 0 ? (
+						<li class="empty-scores">No scores yet! Complete a round to rank.</li>
+					) : (
+						scores.map((entry, idx) => (
+							<li class="score-entry">
+								<span class="score-rank">#{idx + 1}</span>
+								<span class="score-name">{entry.name}</span>
+								<span class="score-pts">{entry.score} pts</span>
+							</li>
+						))
+					)}
+				</ul>
+			</section>
+			<div class="footer-info">
+				<p>10x Games • Device-local play • Zero ads • Zero tracking</p>
+			</div>
+		</footer>
+	</div>
 </Layout>
+
+<style>
+	.site-container {
+		max-width: 680px;
+		margin: 0 auto;
+		padding: 1.5rem 1rem 3rem 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1.8rem;
+		min-height: 100vh;
+	}
+
+	/* Header */
+	.retro-header {
+		text-align: center;
+		padding-top: 1rem;
+	}
+
+	.logo-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: #111620;
+		border: 2px solid #232d3d;
+		border-radius: 8px;
+		padding: 0.5rem 1.2rem;
+		box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+	}
+
+	.pixel-brand {
+		font-family: ui-monospace, 'Courier New', monospace;
+		font-size: 1.4rem;
+		font-weight: 900;
+		color: #ff007f;
+		text-shadow: 0 0 8px rgba(255, 0, 127, 0.5);
+	}
+
+	.arcade-title {
+		font-family: ui-monospace, 'Courier New', monospace;
+		font-size: 1.4rem;
+		font-weight: 900;
+		color: #00f0ff;
+		letter-spacing: 0.1em;
+		text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+	}
+
+	.tagline {
+		color: #7d8b9f;
+		font-size: 0.85rem;
+		margin-top: 0.6rem;
+		margin-bottom: 0;
+		font-family: ui-monospace, monospace;
+	}
+
+	/* Game View */
+	.game-view-container {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		align-items: center;
+		width: 100%;
+	}
+
+	.game-top-bar {
+		width: 100%;
+		max-width: 520px;
+		text-align: center;
+	}
+
+	.active-game-heading {
+		font-family: ui-monospace, monospace;
+		font-size: 1.25rem;
+		font-weight: 800;
+		color: #00ff9f;
+		letter-spacing: 0.08em;
+		margin: 0;
+		text-shadow: 0 0 10px rgba(0, 255, 159, 0.4);
+	}
+
+	/* Scores Panel */
+	.retro-footer {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		margin-top: 1rem;
+	}
+
+	.scores-panel {
+		background: #111620;
+		border: 2px solid #232d3d;
+		border-radius: 8px;
+		padding: 1.2rem;
+		max-width: 520px;
+		margin: 0 auto;
+		width: 100%;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+	}
+
+	.scores-heading {
+		font-family: ui-monospace, monospace;
+		font-size: 0.85rem;
+		font-weight: 800;
+		color: #ffe600;
+		letter-spacing: 0.05em;
+		margin: 0 0 0.8rem 0;
+		text-align: center;
+		text-shadow: 0 0 8px rgba(255, 230, 0, 0.3);
+	}
+
+	.scores-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+
+	.score-entry {
+		display: flex;
+		justify-content: space-between;
+		font-family: ui-monospace, monospace;
+		font-size: 0.85rem;
+		background: #0b0f16;
+		padding: 0.4rem 0.6rem;
+		border-radius: 4px;
+		border: 1px solid #1a222f;
+	}
+
+	.score-rank {
+		color: #7d8b9f;
+		font-weight: 700;
+		width: 30px;
+	}
+
+	.score-name {
+		color: #d1e4ff;
+		flex-grow: 1;
+	}
+
+	.score-pts {
+		color: #00f0ff;
+		font-weight: 700;
+	}
+
+	.empty-scores {
+		color: #64748b;
+		font-size: 0.8rem;
+		font-family: ui-monospace, monospace;
+		text-align: center;
+		padding: 0.5rem 0;
+	}
+
+	.footer-info {
+		text-align: center;
+		font-size: 0.75rem;
+		color: #4b5563;
+		font-family: ui-monospace, monospace;
+	}
+</style>
