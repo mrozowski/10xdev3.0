@@ -37,13 +37,17 @@ export function getScores(): ScoreEntry[] {
 
 	try {
 		const scores: unknown = JSON.parse(storedScores);
-		return Array.isArray(scores) && scores.every(isScoreEntry) ? scores : [];
+		return Array.isArray(scores) ? scores.filter(isScoreEntry) : [];
 	} catch {
 		return [];
 	}
 }
 
 export function addScore(entry: NewScoreEntry): ScoreEntry[] {
+	if (!Number.isFinite(entry.score)) {
+		return getScores();
+	}
+
 	const score: ScoreEntry = {
 		name: entry.name?.trim() || 'Anonymous',
 		score: entry.score,

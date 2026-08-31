@@ -1,7 +1,7 @@
 ---
 change_id: local-score-contract
 title: Local score state and theme configuration contract
-status: implemented
+status: impl_reviewed
 created: 2026-08-31
 updated: 2026-08-31
 roadmap_ref: F-01

@@ -10,6 +10,18 @@ describe('getScores', () => {
 	it('returns an empty list when no scores are stored', () => {
 		expect(getScores()).toEqual([]);
 	});
+
+	it('retains valid scores when storage contains an invalid entry', () => {
+		localStorage.setItem(
+			'10xgames:scores',
+			JSON.stringify([
+				{ name: 'Ada', score: 42, date: '2026-08-31T20:00:00.000Z' },
+				{ name: 'Broken', score: 'not-a-number', date: '2026-08-31T20:00:00.000Z' },
+			]),
+		);
+
+		expect(getScores()).toEqual([{ name: 'Ada', score: 42, date: '2026-08-31T20:00:00.000Z' }]);
+	});
 });
 
 describe('addScore', () => {
@@ -51,5 +63,12 @@ describe('addScore', () => {
 		addScore({ name: '   ', score: 10 });
 
 		expect(getScores().map(({ name }) => name)).toEqual(['Anonymous', 'Anonymous']);
+	});
+
+	it('does not persist a non-finite runtime score', () => {
+		addScore({ name: 'Ada', score: 42 });
+		addScore({ name: 'Broken', score: Number.NaN });
+
+		expect(getScores().map(({ score }) => score)).toEqual([42]);
 	});
 });
