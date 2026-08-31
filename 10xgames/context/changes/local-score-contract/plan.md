@@ -250,15 +250,15 @@ Not applicable — this is a net-new contract with no prior stored data format t
 
 #### Automated
 
-- [x] 2.1 npm run test passes for src/lib/storage.test.ts
-- [x] 2.2 npm run astro -- check reports no new type errors
+- [x] 2.1 npm run test passes for src/lib/storage.test.ts — 5eaf468
+- [x] 2.2 npm run astro -- check reports no new type errors — 5eaf468
 
 ### Phase 3: Preferences contract (theme + sound)
 
 #### Automated
 
-- [ ] 3.1 npm run test passes for src/lib/preferences.test.ts
-- [ ] 3.2 npm run astro -- check reports no new type errors
+- [x] 3.1 npm run test passes for src/lib/preferences.test.ts
+- [x] 3.2 npm run astro -- check reports no new type errors
 
 ### Phase 4: Scores contract (top-10 list)
 
