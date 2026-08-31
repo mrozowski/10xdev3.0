@@ -1,22 +1,23 @@
-## Development
+# 10x Games: Repository Guidelines
 
-When starting the dev server, use background mode:
+## Product and architecture
 
-```
-astro dev --background
-```
+- This is an Astro 7 static site for a retro browser-game collection, deployed to GitHub Pages. See @README.md for the standard Astro project layout. The current `index.astro` and `Welcome.astro` are unmodified Astro starter content and should be replaced as the game site is implemented.
+- The MVP is the landing-page game catalogue plus one complete Memory Cards game. Keep each game isolated so future games can be added without restructuring the existing game.
+- Keep game interaction in client-side Astro islands. Game state, optional player names, and high scores are device-local (browser storage); the MVP has no backend, database, accounts, cloud synchronization, ads, analytics, or player-data collection.
+- Themes determine the Memory Cards images. Add supplied visual and audio assets without coupling asset changes to game logic. The game must support phones, tablets, and desktop devices while keeping the initial page load within the PRD’s two-second target on a normal connection; avoid hydrating catalogue-only UI and load game assets only when needed.
+- Treat `context/foundation/prd.md` as the product source of truth. It defines the gameplay, score, privacy, performance, and MVP scope requirements. `context/foundation/tech-stack.md` records the Astro and GitHub Pages deployment choice.
 
-Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+## Commands
 
-## Documentation
+Use Node.js `>=22.12.0` and npm.
 
-Full documentation: https://docs.astro.build
+List of commands can be found at @README.md
 
-Consult these guides before working on related tasks:
+No test runner, single-test command, linter, or lint script is configured yet.
 
-- [Adding pages, dynamic routes, or middleware](https://docs.astro.build/en/guides/routing/)
-- [Working with Astro components](https://docs.astro.build/en/basics/astro-components/)
-- [Using React, Vue, Svelte, or other framework components](https://docs.astro.build/en/guides/framework-components/)
-- [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
-- [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
-- [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+## Repository conventions
+
+- Preserve Astro's static-output model. Configure `site` and any required `base` path in `astro.config.mjs` as part of GitHub Pages deployment work.
+- Foundation documents under `context/foundation/` are living documents: update them in place when product decisions change. Change-scoped planning belongs in `context/changes/<change-id>/`; do not modify `context/archive/`, which is immutable by convention.
+- `CLAUDE.md` is a symlink to this file. Keep project-specific agent guidance here and avoid duplicating it across agent configuration files.
