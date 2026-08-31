@@ -9,3 +9,9 @@ I run coding agent inside docker container. This way I can have better control o
 * Find the docker container: `docker ps -a`
 * Start your docker container `docker start 9d44`
 * Enter it: `docker exec -it 10xdev-agent bash`
+
+
+## Useful skills
+
+* `/10x-lesson`: Add a new lesson/rule for agent
+
