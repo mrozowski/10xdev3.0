@@ -1,0 +1,9 @@
+services:
+  10xdev-agent:
+    build: .
+    container_name: 10xdev-agent
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    tty: true
+    stdin_open: true
