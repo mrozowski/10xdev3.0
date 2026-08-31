@@ -1,7 +1,7 @@
 ---
 change_id: first-memory-round
 title: Memory Cards first full round flow
-status: implementing
+status: implemented
 created: 2026-08-31
 updated: 2026-08-31
 roadmap_ref: S-01

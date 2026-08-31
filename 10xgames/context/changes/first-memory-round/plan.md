@@ -357,13 +357,13 @@ None. Replaces the temporary Astro starter boilerplate with the initial game cat
 
 #### Automated
 
-- [x] 5.1 Typecheck passes: npm run astro -- check
-- [x] 5.2 Production build succeeds: npm run build
-- [x] 5.3 Unit tests pass: npm run test
+- [x] 5.1 Typecheck passes: npm run astro -- check — bbecaca
+- [x] 5.2 Production build succeeds: npm run build — bbecaca
+- [x] 5.3 Unit tests pass: npm run test — bbecaca
 
 #### Manual
 
-- [x] 5.4 Open preview or dev server: landing page displays retro arcade catalogue
-- [x] 5.5 Clicking Play Memory Cards launches the game smoothly on desktop and mobile viewport sizes
-- [x] 5.6 Audio plays on user tap/click when sound is enabled; mute button silences audio
-- [x] 5.7 Completing a game round updates the high score list
+- [x] 5.4 Open preview or dev server: landing page displays retro arcade catalogue — bbecaca
+- [x] 5.5 Clicking Play Memory Cards launches the game smoothly on desktop and mobile viewport sizes — bbecaca
+- [x] 5.6 Audio plays on user tap/click when sound is enabled; mute button silences audio — bbecaca
+- [x] 5.7 Completing a game round updates the high score list — bbecaca
