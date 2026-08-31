@@ -1,0 +1,680 @@
+---
+import { getPreferences } from '../../lib/preferences';
+
+const preferences = getPreferences();
+---
+
+<div id="memory-game-root" class="memory-game-wrapper" data-theme={preferences.theme}>
+	<!-- Top Controls & HUD -->
+	<header class="game-hud">
+		<div class="hud-item score-box">
+			<span class="hud-label">SCORE</span>
+			<span id="hud-score" class="hud-value neon-cyan">0</span>
+		</div>
+
+		<div class="hud-item combo-box">
+			<span class="hud-label">COMBO</span>
+			<span id="hud-combo" class="hud-value neon-pink">x1</span>
+		</div>
+
+		<div class="hud-item timer-box">
+			<span class="hud-label">TIME</span>
+			<span id="hud-timer" class="hud-value neon-yellow">60s</span>
+		</div>
+
+		<div class="hud-item sound-control">
+			<button id="btn-sound-toggle" class="retro-btn icon-btn" type="button" aria-label="Toggle Sound">
+				<span id="sound-icon" class="sound-status">🔊</span>
+			</button>
+		</div>
+	</header>
+
+	<!-- Preview Countdown Alert / Bar -->
+	<div id="preview-banner" class="preview-banner">
+		<div class="preview-text">
+			MEMORIZE CARDS: <span id="preview-countdown" class="neon-green">3</span>s
+		</div>
+		<div class="preview-progress-track">
+			<div id="preview-progress-bar" class="preview-progress-fill"></div>
+		</div>
+	</div>
+
+	<!-- 4x4 Cards Grid Container -->
+	<main class="grid-container" id="cards-grid">
+		<!-- 16 Cards will be rendered and bound by client script -->
+	</main>
+
+	<!-- Game Over / Victory Modal Overlay -->
+	<div id="game-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+		<div class="modal-card">
+			<div class="modal-header">
+				<h2 id="modal-title" class="modal-title neon-green">VICTORY!</h2>
+			</div>
+			<div class="modal-body">
+				<p id="modal-message" class="modal-subtitle">All pairs matched in time!</p>
+				
+				<div class="modal-stats">
+					<div class="stat-row">
+						<span>Final Score:</span>
+						<strong id="modal-final-score" class="neon-cyan">0</strong>
+					</div>
+					<div class="stat-row" id="stat-time-bonus-row">
+						<span>Time Bonus:</span>
+						<strong id="modal-time-bonus" class="neon-yellow">+0</strong>
+					</div>
+				</div>
+
+				<div class="modal-actions">
+					<button id="btn-play-again" class="retro-btn primary-btn" type="button">
+						PLAY AGAIN
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	import {
+		createInitialGameState,
+		tickPreview,
+		tickTimer,
+		flipCard,
+		resolveMismatch,
+		type GameState,
+	} from '../../lib/memory-game/engine';
+	import { getThemeSymbols } from '../../lib/memory-game/themes';
+	import { playSound, initAudioContext } from '../../lib/sound';
+	import { getPreferences, setSoundEnabled } from '../../lib/preferences';
+	import { addScore } from '../../lib/scores';
+
+	class MemoryGameIsland {
+		private root: HTMLElement;
+		private gridEl: HTMLElement;
+		private hudScore: HTMLElement;
+		private hudCombo: HTMLElement;
+		private hudTimer: HTMLElement;
+		private previewBanner: HTMLElement;
+		private previewCountdown: HTMLElement;
+		private previewProgressBar: HTMLElement;
+		private soundToggleBtn: HTMLButtonElement;
+		private soundIcon: HTMLElement;
+		private modal: HTMLElement;
+		private modalTitle: HTMLElement;
+		private modalMessage: HTMLElement;
+		private modalFinalScore: HTMLElement;
+		private modalTimeBonus: HTMLElement;
+		private timeBonusRow: HTMLElement;
+		private btnPlayAgain: HTMLButtonElement;
+
+		private state!: GameState;
+		private previewInterval: number | null = null;
+		private roundInterval: number | null = null;
+		private symbolsMap: Map<string, { name: string; color: string; svgPath: string }> = new Map();
+
+		constructor(root: HTMLElement) {
+			this.root = root;
+			this.gridEl = root.querySelector('#cards-grid') as HTMLElement;
+			this.hudScore = root.querySelector('#hud-score') as HTMLElement;
+			this.hudCombo = root.querySelector('#hud-combo') as HTMLElement;
+			this.hudTimer = root.querySelector('#hud-timer') as HTMLElement;
+			this.previewBanner = root.querySelector('#preview-banner') as HTMLElement;
+			this.previewCountdown = root.querySelector('#preview-countdown') as HTMLElement;
+			this.previewProgressBar = root.querySelector('#preview-progress-bar') as HTMLElement;
+			this.soundToggleBtn = root.querySelector('#btn-sound-toggle') as HTMLButtonElement;
+			this.soundIcon = root.querySelector('#sound-icon') as HTMLElement;
+			this.modal = root.querySelector('#game-modal') as HTMLElement;
+			this.modalTitle = root.querySelector('#modal-title') as HTMLElement;
+			this.modalMessage = root.querySelector('#modal-message') as HTMLElement;
+			this.modalFinalScore = root.querySelector('#modal-final-score') as HTMLElement;
+			this.modalTimeBonus = root.querySelector('#modal-time-bonus') as HTMLElement;
+			this.timeBonusRow = root.querySelector('#stat-time-bonus-row') as HTMLElement;
+			this.btnPlayAgain = root.querySelector('#btn-play-again') as HTMLButtonElement;
+
+			this.initSymbols();
+			this.bindEvents();
+			this.startNewGame();
+		}
+
+		private initSymbols(): void {
+			const currentPrefs = getPreferences();
+			const symbols = getThemeSymbols(currentPrefs.theme);
+			this.symbolsMap.clear();
+			for (const sym of symbols) {
+				this.symbolsMap.set(sym.id, sym);
+			}
+			this.updateSoundIcon(currentPrefs.soundEnabled);
+		}
+
+		private bindEvents(): void {
+			this.soundToggleBtn.addEventListener('click', () => {
+				initAudioContext();
+				const current = getPreferences().soundEnabled;
+				setSoundEnabled(!current);
+				this.updateSoundIcon(!current);
+				if (!current) {
+					playSound('tick');
+				}
+			});
+
+			this.btnPlayAgain.addEventListener('click', () => {
+				initAudioContext();
+				playSound('tick');
+				this.modal.classList.add('hidden');
+				this.startNewGame();
+			});
+
+			// User gesture audio unlock
+			this.root.addEventListener('pointerdown', () => {
+				initAudioContext();
+			}, { once: true });
+		}
+
+		private updateSoundIcon(enabled: boolean): void {
+			this.soundIcon.textContent = enabled ? '🔊' : '🔇';
+			this.soundToggleBtn.classList.toggle('muted', !enabled);
+		}
+
+		public startNewGame(): void {
+			this.clearIntervals();
+			const currentPrefs = getPreferences();
+			const symbols = getThemeSymbols(currentPrefs.theme);
+			const symbolIds = symbols.map((s) => s.id);
+
+			this.state = createInitialGameState(symbolIds, 8);
+			this.renderGrid();
+			this.updateHUD();
+
+			this.previewBanner.classList.remove('hidden');
+			this.previewProgressBar.style.width = '100%';
+			this.previewCountdown.textContent = '3';
+
+			// Start 3-second preview timer
+			this.previewInterval = window.setInterval(() => {
+				this.state = tickPreview(this.state);
+				if (this.state.status === 'preview') {
+					playSound('tick');
+					this.previewCountdown.textContent = String(this.state.previewSecondsRemaining);
+					const pct = (this.state.previewSecondsRemaining / 3) * 100;
+					this.previewProgressBar.style.width = `${pct}%`;
+				} else if (this.state.status === 'playing') {
+					this.clearIntervals();
+					this.previewBanner.classList.add('hidden');
+					this.updateCardFlipping();
+					this.startRoundTimer();
+					playSound('flip');
+				}
+			}, 1000);
+		}
+
+		private startRoundTimer(): void {
+			this.roundInterval = window.setInterval(() => {
+				if (this.state.status !== 'playing' && this.state.status !== 'checking') {
+					return;
+				}
+
+				this.state = tickTimer(this.state);
+				this.hudTimer.textContent = `${this.state.roundSecondsRemaining}s`;
+
+				if (this.state.roundSecondsRemaining <= 10 && this.state.roundSecondsRemaining > 0) {
+					this.hudTimer.classList.add('pulse-danger');
+					playSound('tick');
+				}
+
+				if (this.state.status === 'time_up') {
+					this.clearIntervals();
+					this.updateCardFlipping();
+					playSound('gameover');
+					this.showGameOverModal();
+				}
+			}, 1000);
+		}
+
+		private clearIntervals(): void {
+			if (this.previewInterval !== null) {
+				clearInterval(this.previewInterval);
+				this.previewInterval = null;
+			}
+			if (this.roundInterval !== null) {
+				clearInterval(this.roundInterval);
+				this.roundInterval = null;
+			}
+		}
+
+		private renderGrid(): void {
+			this.gridEl.innerHTML = '';
+			this.state.cards.forEach((card, index) => {
+				const symbol = this.symbolsMap.get(card.symbolId);
+				const cardButton = document.createElement('button');
+				cardButton.className = 'card-item';
+				cardButton.type = 'button';
+				cardButton.dataset.index = String(index);
+				cardButton.setAttribute('aria-label', `Card ${index + 1}: ${symbol ? symbol.name : 'Unknown'}`);
+
+				cardButton.innerHTML = `
+					<div class="card-inner ${card.isFlipped ? 'is-flipped' : ''}">
+						<!-- Card Back (Logo & Pattern) -->
+						<div class="card-face card-back">
+							<div class="card-back-pattern">
+								<span class="pixel-star">✦</span>
+							</div>
+						</div>
+						<!-- Card Front (Symbol) -->
+						<div class="card-face card-front" style="--symbol-color: ${symbol?.color || '#00f0ff'}">
+							<svg class="symbol-svg" viewBox="0 0 24 24" width="36" height="36" fill="currentColor">
+								${symbol?.svgPath || ''}
+							</svg>
+							<span class="symbol-name">${symbol?.name || ''}</span>
+						</div>
+					</div>
+				`;
+
+				cardButton.addEventListener('click', () => this.handleCardClick(index));
+				this.gridEl.appendChild(cardButton);
+			});
+		}
+
+		private handleCardClick(index: number): void {
+			if (this.state.status !== 'playing') {
+				return;
+			}
+
+			const { nextState, event } = flipCard(this.state, index);
+			this.state = nextState;
+			this.updateCardFlipping();
+			this.updateHUD();
+
+			if (event === 'flip') {
+				playSound('flip');
+			} else if (event === 'match') {
+				playSound('match');
+			} else if (event === 'completed') {
+				this.clearIntervals();
+				playSound('victory');
+				// Automatically save score
+				addScore({ score: this.state.score });
+				this.showVictoryModal();
+			} else if (event === 'mismatch') {
+				playSound('mismatch');
+				// Lock clicks and flip back after 800ms cooldown
+				window.setTimeout(() => {
+					this.state = resolveMismatch(this.state);
+					this.updateCardFlipping();
+					this.updateHUD();
+				}, 800);
+			}
+		}
+
+		private updateCardFlipping(): void {
+			const cardEls = this.gridEl.querySelectorAll('.card-item');
+			this.state.cards.forEach((card, idx) => {
+				const el = cardEls[idx];
+				if (!el) return;
+				const inner = el.querySelector('.card-inner');
+				if (inner) {
+					inner.classList.toggle('is-flipped', card.isFlipped || card.isMatched);
+					inner.classList.toggle('is-matched', card.isMatched);
+				}
+				if (card.isMatched) {
+					el.setAttribute('disabled', 'true');
+				} else {
+					el.removeAttribute('disabled');
+				}
+			});
+		}
+
+		private updateHUD(): void {
+			this.hudScore.textContent = String(this.state.score);
+			this.hudCombo.textContent = `x${Math.max(1, this.state.combo)}`;
+			this.hudTimer.textContent = `${this.state.roundSecondsRemaining}s`;
+		}
+
+		private showVictoryModal(): void {
+			this.modalTitle.textContent = 'VICTORY!';
+			this.modalTitle.className = 'modal-title neon-green';
+			this.modalMessage.textContent = 'All 8 pairs matched in time!';
+			this.modalFinalScore.textContent = String(this.state.score);
+			this.timeBonusRow.classList.remove('hidden');
+			this.modalTimeBonus.textContent = `+${this.state.roundSecondsRemaining * 10} pts`;
+			this.modal.classList.remove('hidden');
+		}
+
+		private showGameOverModal(): void {
+			this.modalTitle.textContent = 'TIME UP!';
+			this.modalTitle.className = 'modal-title neon-pink';
+			this.modalMessage.textContent = 'The timer ran out before all pairs were found.';
+			this.modalFinalScore.textContent = String(this.state.score);
+			this.timeBonusRow.classList.add('hidden');
+			this.modal.classList.remove('hidden');
+		}
+	}
+
+	// Mount the island on DOM load
+	const root = document.getElementById('memory-game-root');
+	if (root) {
+		new MemoryGameIsland(root);
+	}
+</script>
+
+<style>
+	.memory-game-wrapper {
+		width: 100%;
+		max-width: 520px;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	/* HUD Header */
+	.game-hud {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr) auto;
+		gap: 0.5rem;
+		align-items: center;
+		background: #111620;
+		border: 2px solid #232d3d;
+		border-radius: 8px;
+		padding: 0.6rem 0.8rem;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+	}
+
+	.hud-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.hud-label {
+		font-family: ui-monospace, 'Courier New', monospace;
+		font-size: 0.65rem;
+		font-weight: 700;
+		color: #7d8b9f;
+		letter-spacing: 0.05em;
+	}
+
+	.hud-value {
+		font-family: ui-monospace, 'Courier New', monospace;
+		font-size: 1.15rem;
+		font-weight: 800;
+		letter-spacing: 0.02em;
+	}
+
+	/* Neon Colors */
+	.neon-cyan { color: #00f0ff; text-shadow: 0 0 8px rgba(0, 240, 255, 0.4); }
+	.neon-pink { color: #ff007f; text-shadow: 0 0 8px rgba(255, 0, 127, 0.4); }
+	.neon-green { color: #00ff9f; text-shadow: 0 0 8px rgba(0, 255, 159, 0.4); }
+	.neon-yellow { color: #ffe600; text-shadow: 0 0 8px rgba(255, 230, 0, 0.4); }
+
+	.pulse-danger {
+		animation: pulseRed 0.6s infinite alternate;
+	}
+
+	@keyframes pulseRed {
+		0% { color: #ffe600; text-shadow: 0 0 8px #ffe600; }
+		100% { color: #ff4444; text-shadow: 0 0 12px #ff4444; transform: scale(1.08); }
+	}
+
+	/* Preview Countdown Bar */
+	.preview-banner {
+		background: #16202c;
+		border: 1px solid #00ff9f;
+		border-radius: 6px;
+		padding: 0.5rem 0.8rem;
+		text-align: center;
+		box-shadow: 0 0 10px rgba(0, 255, 159, 0.2);
+		animation: fadeIn 0.3s ease;
+	}
+
+	.preview-text {
+		font-family: ui-monospace, monospace;
+		font-size: 0.85rem;
+		font-weight: bold;
+		color: #d1e4ff;
+		margin-bottom: 0.4rem;
+	}
+
+	.preview-progress-track {
+		width: 100%;
+		height: 4px;
+		background: #090e16;
+		border-radius: 2px;
+		overflow: hidden;
+	}
+
+	.preview-progress-fill {
+		height: 100%;
+		background: #00ff9f;
+		box-shadow: 0 0 6px #00ff9f;
+		transition: width 1s linear;
+	}
+
+	/* 4x4 Grid */
+	.grid-container {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 0.6rem;
+		aspect-ratio: 1 / 1;
+		width: 100%;
+		perspective: 1000px;
+	}
+
+	/* Card Item */
+	.card-item {
+		background: transparent;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		aspect-ratio: 1 / 1;
+		perspective: 1000px;
+		outline: none;
+	}
+
+	.card-item:focus-visible .card-inner {
+		box-shadow: 0 0 0 2px #00f0ff;
+	}
+
+	.card-inner {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		border-radius: 8px;
+		transform-style: preserve-3d;
+		transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+	}
+
+	.card-inner.is-flipped {
+		transform: rotateY(180deg);
+	}
+
+	.card-inner.is-matched {
+		transform: rotateY(180deg);
+		animation: matchBounce 0.4s ease;
+	}
+
+	@keyframes matchBounce {
+		0% { transform: rotateY(180deg) scale(1); }
+		50% { transform: rotateY(180deg) scale(1.08); }
+		100% { transform: rotateY(180deg) scale(1); }
+	}
+
+	.card-face {
+		position: absolute;
+		inset: 0;
+		border-radius: 8px;
+		backface-visibility: hidden;
+		-webkit-backface-visibility: hidden;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		border: 2px solid #232d3d;
+	}
+
+	/* Card Back */
+	.card-back {
+		background: #161c26;
+		background-image: radial-gradient(#263447 15%, transparent 16%);
+		background-size: 10px 10px;
+		color: #43546b;
+	}
+
+	.card-item:hover .card-back {
+		border-color: #00f0ff;
+		box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+	}
+
+	.pixel-star {
+		font-size: 1.2rem;
+		opacity: 0.6;
+	}
+
+	/* Card Front */
+	.card-front {
+		background: #111620;
+		transform: rotateY(180deg);
+		color: var(--symbol-color, #00f0ff);
+		border-color: var(--symbol-color, #00f0ff);
+		box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
+		padding: 0.3rem;
+		gap: 0.2rem;
+	}
+
+	.symbol-svg {
+		filter: drop-shadow(0 0 6px currentColor);
+	}
+
+	.symbol-name {
+		font-family: ui-monospace, monospace;
+		font-size: 0.6rem;
+		font-weight: 700;
+		text-align: center;
+		color: #e2e8f0;
+		line-height: 1;
+	}
+
+	/* Buttons */
+	.retro-btn {
+		background: #1a2230;
+		border: 1px solid #33445c;
+		border-radius: 6px;
+		color: #e2e8f0;
+		cursor: pointer;
+		font-family: ui-monospace, monospace;
+		font-weight: 700;
+		transition: all 0.15s ease;
+	}
+
+	.retro-btn:hover {
+		background: #253347;
+		border-color: #00f0ff;
+		color: #00f0ff;
+	}
+
+	.icon-btn {
+		padding: 0.4rem 0.6rem;
+		font-size: 1rem;
+	}
+
+	.primary-btn {
+		padding: 0.8rem 1.6rem;
+		font-size: 0.95rem;
+		background: #00ff9f;
+		color: #090e16;
+		border: 2px solid #00ff9f;
+		box-shadow: 0 0 12px rgba(0, 255, 159, 0.4);
+	}
+
+	.primary-btn:hover {
+		background: #00f0ff;
+		border-color: #00f0ff;
+		color: #090e16;
+		box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
+		transform: translateY(-1px);
+	}
+
+	/* Modal */
+	.modal-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(5, 8, 14, 0.85);
+		backdrop-filter: blur(4px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 100;
+		padding: 1rem;
+		animation: fadeIn 0.2s ease;
+	}
+
+	.modal-card {
+		background: #111620;
+		border: 2px solid #2a374a;
+		border-radius: 12px;
+		padding: 2rem;
+		width: 100%;
+		max-width: 380px;
+		text-align: center;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.2);
+	}
+
+	.modal-title {
+		font-family: ui-monospace, monospace;
+		font-size: 1.8rem;
+		font-weight: 900;
+		margin: 0 0 0.5rem 0;
+	}
+
+	.modal-subtitle {
+		color: #94a3b8;
+		font-size: 0.9rem;
+		margin: 0 0 1.5rem 0;
+	}
+
+	.modal-stats {
+		background: #0b0f16;
+		border: 1px solid #1c2736;
+		border-radius: 8px;
+		padding: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin-bottom: 1.5rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	.stat-row {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.95rem;
+		color: #cbd5e1;
+	}
+
+	.hidden {
+		display: none !important;
+	}
+
+	@keyframes fadeIn {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@media (max-width: 480px) {
+		.grid-container {
+			gap: 0.4rem;
+		}
+		.symbol-svg {
+			width: 28px;
+			height: 28px;
+		}
+		.symbol-name {
+			font-size: 0.5rem;
+		}
+		.hud-value {
+			font-size: 1rem;
+		}
+	}
+</style>

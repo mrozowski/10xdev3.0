@@ -336,22 +336,22 @@ None. Replaces the temporary Astro starter boilerplate with the initial game cat
 
 #### Automated
 
-- [x] 3.1 Unit tests pass: npm run test -- src/lib/memory-game/themes.test.ts
-- [x] 3.2 Type checking passes: npm run astro -- check
+- [x] 3.1 Unit tests pass: npm run test -- src/lib/memory-game/themes.test.ts — fbae554
+- [x] 3.2 Type checking passes: npm run astro -- check — fbae554
 
 ### Phase 4: Game Island & Retro UI
 
 #### Automated
 
-- [ ] 4.1 Astro typecheck passes: npm run astro -- check
-- [ ] 4.2 Full test suite passes: npm run test
+- [x] 4.1 Astro typecheck passes: npm run astro -- check
+- [x] 4.2 Full test suite passes: npm run test
 
 #### Manual
 
-- [ ] 4.3 Cards flip with smooth 60fps 3D rotation without visual glitching
-- [ ] 4.4 3-second preview reveals cards face-up, counts down, then flips face-down
-- [ ] 4.5 Matching pairs stay face-up and trigger match sound; mismatches flip back after brief cooldown
-- [ ] 4.6 Victory screen shows final calculated score and saves score to local list
+- [x] 4.3 Cards flip with smooth 60fps 3D rotation without visual glitching
+- [x] 4.4 3-second preview reveals cards face-up, counts down, then flips face-down
+- [x] 4.5 Matching pairs stay face-up and trigger match sound; mismatches flip back after brief cooldown
+- [x] 4.6 Victory screen shows final calculated score and saves score to local list
 
 ### Phase 5: Landing Page & Catalogue Shell Integration
 
