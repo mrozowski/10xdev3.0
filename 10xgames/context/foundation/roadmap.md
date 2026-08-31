@@ -1,10 +1,10 @@
 ---
 project: "10x Games"
 version: 1
-status: draft
+status: active
 created: 2026-08-31
 updated: 2026-08-31
-prd_version: 1
+prd_version: 2
 main_goal: speed
 top_blocker: time
 milestone_id: memory-cards-mvp
@@ -24,13 +24,13 @@ milestone_status: open
 
 - **Intent:** Deliver a complete, private, instant-play Memory Cards experience that works on common devices and proves the product's core promise without backend infrastructure.
 - **Source materials:** `context/foundation/prd.md` (v1)
-- **Done when:** every F-01 and S-01/S-02 below is `done`.
+- **Done when:** every F-01 and S-01 through S-04 below is `done`.
 - **Scope anchors:**
-  - FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01, US-02
+  - FR-001 through FR-009, US-01 through US-04
 
 ## Vision recap
 
-The product promises instant, private play for a short break: a player should be able to open the site, choose Memory Cards, and start a complete round without sign-up or installation. The MVP stays deliberately narrow: one polished retro game, local score storage, and no backend or account system.
+The product promises instant, private play for a short break: a player should be able to open the site, choose Memory Cards, and start a complete, progressively harder game without sign-up or installation. The MVP stays deliberately narrow: one polished retro game with multiple visual themes, local score storage, and no backend or account system.
 
 ## North star
 
@@ -43,8 +43,10 @@ The product promises instant, private play for a short break: a player should be
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 | ----- | ---------------------- | --------------------------------- | ---------------- | -------------- | -------- |
 | F-01 | local-score-contract | (foundation) track theme choices and locally saved scores under a frictionless name flow | — | FR-003, FR-007, US-02 | done |
-| S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | in-progress |
-| S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | proposed |
+| S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | done |
+| S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | in-review |
+| S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | proposed |
+| S-04 | animals-card-theme | select and play with an animals card theme | S-01 | FR-003, FR-009, US-04 | proposed |
 
 ## Baseline
 
@@ -85,7 +87,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Unknowns:**
   - No major product unknowns remain in the PRD; if a new theme or sound requirement appears, it should be treated as a roadmap-wide decision. Owner: team. Block: no.
 - **Risk:** If the first round is not reliably playable across mobile and desktop layouts, the product cannot validate its core promise before the rest of the feature work expands.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: Player can save and replay a completed-round score locally
 
@@ -100,17 +102,45 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Risk:** If score persistence becomes intrusive or blocks replay, the product drifts from its instant-play promise and the local scoring loop will feel heavy instead of frictionless.
 - **Status:** proposed
 
+### S-03: Player can advance through progressively harder Memory Cards rounds
+
+- **Outcome:** user can complete consecutive rounds that become harder: the first round briefly reveals cards, while later rounds remove that reveal and increase the number of pairs.
+- **Change ID:** progressive-memory-rounds
+- **PRD refs:** FR-004, FR-008, US-03
+- **Prerequisites:** S-01
+- **Parallel with:** S-04
+- **Blockers:** —
+- **Unknowns:**
+  - Pair counts and time limits must preserve a playable layout on phones, tablets, and desktop screens. Owner: team. Block: no.
+- **Risk:** Difficulty that rises too sharply or produces an unusable board on smaller screens undermines the short, approachable play experience.
+- **Status:** proposed
+
+### S-04: Player can select and play with an animals card theme
+
+- **Outcome:** user can choose animals as a Memory Cards theme and play every round using distinct, recognizable animal card imagery.
+- **Change ID:** animals-card-theme
+- **PRD refs:** FR-003, FR-009, US-04
+- **Prerequisites:** S-01
+- **Parallel with:** S-03
+- **Blockers:** —
+- **Unknowns:**
+  - Animal assets must remain lightweight and distinguishable at mobile card sizes. Owner: team. Block: no.
+- **Risk:** If animal cards are visually ambiguous or slow the initial game load, the new theme hurts matching clarity and the instant-play promise.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
 | ---------- | ---------------------- | ----------------------------- | --------------------- | ----- |
 | F-01 | local-score-contract | Local score and theme state contract | yes | Minimal foundation for local persistence and settings |
-| S-01 | first-memory-round | Memory Cards first full round flow | yes | Run `/10x-plan first-memory-round` |
-| S-02 | local-score-replay | Local score persistence and replay loop | no | Depends on the first round flow landing first |
+| S-01 | first-memory-round | Memory Cards first full round flow | yes | Implemented |
+| S-02 | local-score-replay | Local score persistence and replay loop | no | Awaiting review |
+| S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Run `/10x-plan progressive-memory-rounds` |
+| S-04 | animals-card-theme | Animals Memory Cards theme | yes | Run `/10x-plan animals-card-theme` |
 
 ## Open Roadmap Questions
 
-1. **No product blockers are currently outstanding in the PRD.** — Owner: product. Block: roadmap-wide.
+1. **Round-tuning values are intentionally implementation-level.** Establish exact pair counts and time limits during `progressive-memory-rounds`, preserving playable layouts across supported devices. — Owner: team. Block: no.
 
 ## Parked
 
@@ -123,4 +153,5 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 
 ## Done
 
-(empty)
+- **F-01: Local score state and theme configuration contract** — completed.
+- **S-01: Player can start and complete a first Memory Cards round** — completed.

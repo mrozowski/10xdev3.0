@@ -1,7 +1,7 @@
 ---
 project: "10x Games"
 version: 1
-status: draft
+status: active
 created: 2026-08-31
 context_type: greenfield
 product_type: web-app
@@ -56,6 +56,29 @@ The primary persona is an adult familiar with classic games such as Memory Cards
 - **When** they enter or accept a generated name
 - **Then** their new score is saved locally under that name
 
+### US-03: Player advances through increasingly difficult rounds
+
+- **Given** a player completes a Memory Cards round
+- **When** they continue to the next round
+- **Then** they receive a playable round with greater difficulty than the previous one
+
+#### Acceptance Criteria
+
+- The first round briefly reveals all cards before turning them face down.
+- Later rounds omit the initial reveal and increase the number of pairs.
+- The player can see which round they are playing.
+
+### US-04: Player chooses an animals card theme
+
+- **Given** a player is configuring a Memory Cards game
+- **When** they select the animals theme
+- **Then** the game uses distinct animal images for its cards
+
+#### Acceptance Criteria
+
+- Animals is available alongside the software-development theme.
+- Animal cards remain recognizable on phone, tablet, and desktop layouts.
+
 ## Functional Requirements
 
 ### Game access and play
@@ -70,6 +93,8 @@ The primary persona is an adult familiar with classic games such as Memory Cards
   > Socrates: Counter-argument considered: scoring might add complexity or unwanted competition. Resolution: kept; completing a playable round and seeing its result is the core product outcome.
 - FR-005: Player can play Memory Cards without issues on a PC, tablet, or phone. Priority: must-have
   > Socrates: Counter-argument considered: broad device support could jeopardize the MVP timeline. Resolution: kept; consistent play across common devices is a stated guardrail.
+- FR-008: After completing a round, player can continue through progressively more difficult rounds. The first round briefly reveals all cards; later rounds omit the reveal and increase the number of pairs while preserving a playable layout on supported devices. Priority: must-have
+  > Socrates: Counter-argument considered: multi-round progression expands the MVP beyond a single round. Resolution: kept; escalating difficulty is required gameplay rather than an optional mode.
 
 ### Presentation and local scores
 
@@ -77,6 +102,8 @@ The primary persona is an adult familiar with classic games such as Memory Cards
   > Socrates: Counter-argument considered: visual polish could distract, reduce device responsiveness, or consume core-game time. Resolution: kept; the clean retro presentation is central to the experience.
 - FR-007: Player's completed-round score is saved locally under a generated name unless they optionally enter a name; naming never blocks replay or leaving. Priority: nice-to-have
   > Socrates: Counter-argument considered: naming and persistence could create post-game friction or exceed the core-play scope. Resolution: kept as nice-to-have; scores save automatically under a generated name and optional naming must be frictionless.
+- FR-009: Player can select an animals card theme in addition to the software-development theme. Theme selection changes card imagery only and must not alter Memory Cards rules or progression. Priority: should-have
+  > Socrates: Counter-argument considered: another theme can delay the core game. Resolution: kept; animals adds clear variety through a contained, asset-focused extension of the existing theme system.
 
 ## Non-Functional Requirements
 
@@ -87,11 +114,11 @@ The primary persona is an adult familiar with classic games such as Memory Cards
 
 ## Business Logic
 
-The selected theme determines the images shown on Memory Cards, such as animals, plants, or software-development logos and tools.
+The selected theme determines the images shown on Memory Cards. The MVP includes software-development and animals themes; other themes, such as plants, remain future options.
 
-The first round briefly reveals all card images before turning them face down. The player selects pairs; each successful pair earns points, and the round ends when all pairs are found within its time limit.
+The player starts at round one. The first round briefly reveals all card images before turning them face down. The player selects pairs; each successful pair earns points, and the round ends when all pairs are found within its time limit.
 
-Later rounds become more difficult by omitting the initial card reveal and increasing the number of pairs, for example from 16 to 20 or 30.
+On completion, the player can continue to a later round. Later rounds become more difficult by omitting the initial card reveal and increasing the number of pairs, for example from 16 to 20 or 30. Exact pair counts and time limits are implementation tuning decisions, provided each round remains playable on every supported device.
 
 ## Access Control
 
