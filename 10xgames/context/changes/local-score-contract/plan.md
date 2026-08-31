@@ -264,9 +264,9 @@ Not applicable — this is a net-new contract with no prior stored data format t
 
 #### Automated
 
-- [x] 4.1 npm run test passes for src/lib/scores.test.ts (full suite)
-- [x] 4.2 npm run astro -- check reports no new type errors
+- [x] 4.1 npm run test passes for src/lib/scores.test.ts (full suite) — f6f2c63
+- [x] 4.2 npm run astro -- check reports no new type errors — f6f2c63
 
 #### Manual
 
-- [x] 4.3 Console-verified persistence across reload and silent failure when localStorage throws
+- [x] 4.3 Console-verified persistence across reload and silent failure when localStorage throws — f6f2c63
