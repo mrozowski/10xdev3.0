@@ -322,15 +322,15 @@ None. Replaces the temporary Astro starter boilerplate with the initial game cat
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: npm run test -- src/lib/memory-game/engine.test.ts
-- [x] 1.2 Strict type checking passes: npm run astro -- check
+- [x] 1.1 Unit tests pass: npm run test -- src/lib/memory-game/engine.test.ts — 76eec6c
+- [x] 1.2 Strict type checking passes: npm run astro -- check — 76eec6c
 
 ### Phase 2: Retro Procedural Sound Synthesizer
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: npm run test -- src/lib/sound.test.ts
-- [ ] 2.2 Type checking passes: npm run astro -- check
+- [x] 2.1 Unit tests pass: npm run test -- src/lib/sound.test.ts
+- [x] 2.2 Type checking passes: npm run astro -- check
 
 ### Phase 3: Card SVGs & Theme Registry
 
