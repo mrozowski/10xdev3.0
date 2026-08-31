@@ -243,15 +243,15 @@ Not applicable — this is a net-new contract with no prior stored data format t
 
 #### Automated
 
-- [x] 1.1 npm install completes cleanly with new dev dependencies
-- [x] 1.2 npm run test runs with exit code 0 (0 tests found)
+- [x] 1.1 npm install completes cleanly with new dev dependencies — 09bf08c
+- [x] 1.2 npm run test runs with exit code 0 (0 tests found) — 09bf08c
 
 ### Phase 2: Shared storage safety wrapper
 
 #### Automated
 
-- [ ] 2.1 npm run test passes for src/lib/storage.test.ts
-- [ ] 2.2 npm run astro -- check reports no new type errors
+- [x] 2.1 npm run test passes for src/lib/storage.test.ts
+- [x] 2.2 npm run astro -- check reports no new type errors
 
 ### Phase 3: Preferences contract (theme + sound)
 
