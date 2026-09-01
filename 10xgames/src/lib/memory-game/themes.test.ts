@@ -6,15 +6,15 @@ import {
 } from './themes';
 
 describe('Theme Registry', () => {
-	it('provides exactly 8 unique symbols for software-dev theme', () => {
+	it('provides exactly 16 unique symbols for software-dev theme', () => {
 		const symbols = getThemeSymbols('software-dev');
 
-		expect(symbols).toHaveLength(8);
+		expect(symbols).toHaveLength(16);
 		expect(symbols).toBe(DEV_THEME_SYMBOLS);
 
 		const ids = symbols.map((s) => s.id);
 		const uniqueIds = new Set(ids);
-		expect(uniqueIds.size).toBe(8);
+		expect(uniqueIds.size).toBe(16);
 	});
 
 	it('ensures every symbol contains valid SVG markup and hex color', () => {
@@ -39,6 +39,14 @@ describe('Theme Registry', () => {
 			'bug',
 			'rocket',
 			'shield',
+			'keyboard',
+			'monitor',
+			'folder',
+			'cloud',
+			'network',
+			'lock',
+			'mouse',
+			'server',
 		]);
 	});
 });

@@ -4,11 +4,13 @@ export type ScoreEntry = {
 	name: string;
 	score: number;
 	date: string;
+	roundsCompleted?: number;
 };
 
 export type NewScoreEntry = {
 	name?: string;
 	score: number;
+	roundsCompleted?: number;
 };
 
 const STORAGE_KEY = '10xgames:scores';
@@ -20,12 +22,23 @@ function isScoreEntry(value: unknown): value is ScoreEntry {
 	}
 
 	const scoreEntry = value as Record<string, unknown>;
-	return (
-		typeof scoreEntry.name === 'string' &&
-		typeof scoreEntry.score === 'number' &&
-		Number.isFinite(scoreEntry.score) &&
-		typeof scoreEntry.date === 'string'
-	);
+	if (
+		typeof scoreEntry.name !== 'string' ||
+		typeof scoreEntry.score !== 'number' ||
+		!Number.isFinite(scoreEntry.score) ||
+		typeof scoreEntry.date !== 'string'
+	) {
+		return false;
+	}
+
+	if (
+		scoreEntry.roundsCompleted !== undefined &&
+		(typeof scoreEntry.roundsCompleted !== 'number' || !Number.isFinite(scoreEntry.roundsCompleted))
+	) {
+		return false;
+	}
+
+	return true;
 }
 
 export function getScores(): ScoreEntry[] {
@@ -52,6 +65,7 @@ export function addScore(entry: NewScoreEntry): ScoreEntry[] {
 		name: entry.name?.trim() || 'Anonymous',
 		score: entry.score,
 		date: new Date().toISOString(),
+		...(entry.roundsCompleted !== undefined ? { roundsCompleted: entry.roundsCompleted } : {}),
 	};
 	const scores = [...getScores(), score]
 		.map((scoreEntry, index) => ({ scoreEntry, index }))

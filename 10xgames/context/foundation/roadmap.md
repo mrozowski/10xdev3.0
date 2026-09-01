@@ -45,7 +45,7 @@ The product promises instant, private play for a short break: a player should be
 | F-01 | local-score-contract | (foundation) track theme choices and locally saved scores under a frictionless name flow | — | FR-003, FR-007, US-02 | done |
 | S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | done |
 | S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | in-review |
-| S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | proposed |
+| S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | in-progress |
 | S-04 | animals-card-theme | select and play with an animals card theme | S-01 | FR-003, FR-009, US-04 | proposed |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | proposed |
 
@@ -114,7 +114,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Unknowns:**
   - Pair counts and time limits must preserve a playable layout on phones, tablets, and desktop screens. Owner: team. Block: no.
 - **Risk:** Difficulty that rises too sharply or produces an unusable board on smaller screens undermines the short, approachable play experience.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-04: Player can select and play with an animals card theme
 
