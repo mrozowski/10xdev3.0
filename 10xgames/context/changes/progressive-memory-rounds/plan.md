@@ -299,8 +299,8 @@ No new network requests or assets beyond inline SVG (consistent with the existin
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm run test`
-- [x] 2.2 Type checking passes: `npm run astro -- check`
+- [x] 2.1 Unit tests pass: `npm run test` — 968a7ae
+- [x] 2.2 Type checking passes: `npm run astro -- check` — 968a7ae
 
 #### Manual
 
@@ -310,8 +310,8 @@ No new network requests or assets beyond inline SVG (consistent with the existin
 
 #### Automated
 
-- [ ] 3.1 Unit tests pass: `npm run test`
-- [ ] 3.2 Type checking passes: `npm run astro -- check`
+- [x] 3.1 Unit tests pass: `npm run test`
+- [x] 3.2 Type checking passes: `npm run astro -- check`
 
 ### Phase 4: Game UI integration
 
