@@ -40,6 +40,7 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 | 2 | A player cannot choose Memory Cards from the catalogue or return after play. | High | High | PRD `prd.md:42-50,77`; roadmap `roadmap.md:118-129`; interview Q3/Q4; hot-spot dirs `src/components/`, `src/pages/` |
 | 3 | Saving a score, replaying, or leaving becomes blocked or loses local score data. | Medium | Medium | PRD `prd.md:53-57,92,99`; roadmap `roadmap.md:92-103`; hot-spot dir `src/lib/` (23 changes/30d) |
 | 4 | A locally entered player name is rendered or persisted unsafely. | Medium | Low | PRD `prd.md:53-57,92,109-111` |
+| 5 | Memory Cards accepts matching and non-matching pairs incorrectly, preventing a player from completing a round as intended. | High | Medium | PRD `prd.md:75-81,98-101`; roadmap `roadmap.md:104-115` |
 
 ### Risk Response Guidance
 
@@ -48,14 +49,15 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 | #1 | A fresh visit loads the catalogue, selects the game, and starts a playable round. | A successful build proves client-island startup. | Route, island, and browser boundaries. | Build check + browser e2e | Happy-path-only assertions |
 | #2 | Selection and return preserve a usable navigation loop. | Rendering a card means its action works. | Interaction and navigation state. | Browser e2e | Snapshot without behavior |
 | #3 | Completing a round saves a usable local score without blocking replay or exit. | Storage success in one browser mode proves the flow. | Storage boundary and completion lifecycle. | Unit + integration | Over-mocking internal state |
-| #4 | Arbitrary local names remain text and do not corrupt the score list. | Local-only input needs no validation. | Input, persistence, and rendering boundary. | Unit + integration | Production-derived expected values |
+| #4 | Empty, long, and special-character names do not throw; saved names remain text and do not corrupt the score list. | Local-only input needs no validation. | Input normalization, persistence, and rendering boundary. | Unit + integration | Production-derived expected values |
+| #5 | A pair is marked found only when its cards match; a non-matching pair remains playable. | A completed round proves every individual pair was evaluated correctly. | Pair identity and match-state transition. | Unit only | Assertions copied from the production match rule |
 
 ## 3. Phased Rollout
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
 | 1 | Load and launcher critical path | Prove a visitor can load, choose, start, and return from the game. | #1, #2 | build verification + browser e2e | change opened | testing-load-and-launcher-critical-path |
-| 2 | Game-state and local-score contracts | Preserve progressive play, frictionless local scores, and safe local names. | #3, #4 | unit + integration | not started | — |
+| 2 | Game-state and local-score contracts | Preserve correct pair evaluation, frictionless local scores, and safe local names. | #3, #4, #5 | unit + integration; unit only for pair matching | not started | — |
 | 3 | Quality-gate wiring | Make critical-path and contract checks repeatable before deployment. | cross-cutting | local + CI gates | not started | — |
 
 ## 4. Stack
@@ -79,18 +81,20 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 |---|---|---|---|
 | Astro production build | local + CI | required after §3 Phase 1 | broken static output and load regressions |
 | critical launcher flow | local + CI | required after §3 Phase 1 | broken catalogue, startup, and return behavior |
-| Vitest contracts | local + CI | required after §3 Phase 2 | game-state, storage, and input regressions |
+| Vitest contracts | local + CI | required after §3 Phase 2 | pair-evaluation, storage, and input regressions |
 | pre-deploy smoke | between merge + deploy | planned in §3 Phase 3 | environment-specific launch failures |
 
 ## 6. Cookbook Patterns
 
 ### 6.1 Adding a unit test
 
-- TBD — see §3 Phase 2 for progression, local-score, and safe-name behavior.
+- TBD — see §3 Phase 2 for deterministic pair matching and local-name edge
+  cases (empty, long, and special-character input that must not throw).
 
 ### 6.2 Adding an integration test
 
-- TBD — see §3 Phase 2 for completion, replay, and storage-boundary behavior.
+- TBD — see §3 Phase 2 for completion, replay, storage-boundary behavior,
+  and persistence/rendering of a locally entered name.
 
 ### 6.3 Adding an end-to-end test
 
