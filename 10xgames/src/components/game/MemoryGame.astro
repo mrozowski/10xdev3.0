@@ -313,6 +313,10 @@ const preferences = getPreferences();
 				clearTimeout(this.mismatchTimeout);
 				this.mismatchTimeout = null;
 			}
+			if (this.resizeTimeout !== null) {
+				clearTimeout(this.resizeTimeout);
+				this.resizeTimeout = null;
+			}
 		}
 
 		private renderGrid(): void {
