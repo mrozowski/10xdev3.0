@@ -1,9 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MemoryGame from '../components/game/MemoryGame.astro';
-import { getScores } from '../lib/scores';
-
-const scores = getScores();
 ---
 
 <Layout title="10x Games — Retro Game Collection">
@@ -29,19 +26,7 @@ const scores = getScores();
 		<footer class="retro-footer">
 			<section class="scores-panel">
 				<h3 class="scores-heading">TOP SCORES</h3>
-				<ul id="high-scores-list" class="scores-list">
-					{scores.length === 0 ? (
-						<li class="empty-scores">No scores yet! Complete a round to rank.</li>
-					) : (
-						scores.map((entry, idx) => (
-							<li class="score-entry">
-								<span class="score-rank">#{idx + 1}</span>
-								<span class="score-name">{entry.name}</span>
-								<span class="score-pts">{entry.score} pts</span>
-							</li>
-						))
-					)}
-				</ul>
+				<ul id="high-scores-list" class="scores-list"></ul>
 			</section>
 			<div class="footer-info">
 				<p>10x Games • Device-local play • Zero ads • Zero tracking</p>
@@ -49,6 +34,52 @@ const scores = getScores();
 		</footer>
 	</div>
 </Layout>
+
+<script>
+	import { getScores } from '../lib/scores';
+
+	const scoresList = document.getElementById('high-scores-list');
+
+	function renderHighScores(): void {
+		if (!scoresList) {
+			return;
+		}
+
+		scoresList.replaceChildren();
+		const scores = getScores();
+
+		if (scores.length === 0) {
+			const emptyState = document.createElement('li');
+			emptyState.className = 'empty-scores';
+			emptyState.textContent = 'No scores yet! Complete a round to rank.';
+			scoresList.appendChild(emptyState);
+			return;
+		}
+
+		scores.forEach((entry, index) => {
+			const scoreEntry = document.createElement('li');
+			scoreEntry.className = 'score-entry';
+
+			const rank = document.createElement('span');
+			rank.className = 'score-rank';
+			rank.textContent = `#${index + 1}`;
+
+			const name = document.createElement('span');
+			name.className = 'score-name';
+			name.textContent = entry.name;
+
+			const points = document.createElement('span');
+			points.className = 'score-pts';
+			points.textContent = `${entry.score} pts`;
+
+			scoreEntry.append(rank, name, points);
+			scoresList.appendChild(scoreEntry);
+		});
+	}
+
+	renderHighScores();
+	window.addEventListener('memory-game:scores-updated', renderHighScores);
+</script>
 
 <style>
 	.site-container {
@@ -167,9 +198,28 @@ const scores = getScores();
 		gap: 0.4rem;
 	}
 
-	.score-entry {
+
+	.footer-info {
+		text-align: center;
+		font-size: 0.75rem;
+		color: #4b5563;
+		font-family: ui-monospace, monospace;
+	}
+</style>
+
+<style is:global>
+	/*
+	 * These rules style .score-entry/.score-rank/.score-name/.score-pts/.empty-scores,
+	 * which are <li>/<span> elements created at runtime via document.createElement in
+	 * the client script below. Astro's scoped CSS only tags statically-rendered markup
+	 * with a data-astro-cid attribute, so scoped rules never match JS-created nodes.
+	 * These selectors must stay global for the high-score list styling to apply.
+	 */
+	#high-scores-list .score-entry {
 		display: flex;
+		align-items: baseline;
 		justify-content: space-between;
+		gap: 0.6rem;
 		font-family: ui-monospace, monospace;
 		font-size: 0.85rem;
 		background: #0b0f16;
@@ -178,34 +228,34 @@ const scores = getScores();
 		border: 1px solid #1a222f;
 	}
 
-	.score-rank {
+	#high-scores-list .score-rank {
 		color: #7d8b9f;
 		font-weight: 700;
 		width: 30px;
+		flex-shrink: 0;
 	}
 
-	.score-name {
+	#high-scores-list .score-name {
 		color: #d1e4ff;
 		flex-grow: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
-	.score-pts {
+	#high-scores-list .score-pts {
 		color: #00f0ff;
 		font-weight: 700;
+		flex-shrink: 0;
+		white-space: nowrap;
 	}
 
-	.empty-scores {
+	#high-scores-list .empty-scores {
 		color: #64748b;
 		font-size: 0.8rem;
 		font-family: ui-monospace, monospace;
 		text-align: center;
 		padding: 0.5rem 0;
-	}
-
-	.footer-info {
-		text-align: center;
-		font-size: 0.75rem;
-		color: #4b5563;
-		font-family: ui-monospace, monospace;
 	}
 </style>

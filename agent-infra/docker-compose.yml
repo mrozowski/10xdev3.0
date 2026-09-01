@@ -1,9 +1,11 @@
 services:
-  10xdev-agent:
+  10xdev:
     build: .
-    container_name: 10xdev-agent
+    container_name: agent-infra
+    ports:
+      - "4321:4321"
     volumes:
-      - .:/workspace
+      - ..:/workspace
     working_dir: /workspace
     tty: true
     stdin_open: true

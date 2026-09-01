@@ -14,7 +14,7 @@ export interface ThemeSymbol {
  * fills/strokes (never `currentColor`) so the artwork stays colourful regardless
  * of the inherited text colour. Imagery only — no text elements.
  */
-export const SOFTWARE_DEV_SYMBOLS: readonly ThemeSymbol[] = [
+export const DEV_THEME_SYMBOLS: readonly ThemeSymbol[] = [
 	{
 		id: 'terminal',
 		name: 'Terminal',
@@ -121,7 +121,7 @@ export function getThemeSymbols(theme: Theme = 'software-dev'): readonly ThemeSy
 	switch (theme) {
 		case 'software-dev':
 		default:
-			return SOFTWARE_DEV_SYMBOLS;
+			return DEV_THEME_SYMBOLS;
 	}
 }
 
