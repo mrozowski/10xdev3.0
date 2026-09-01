@@ -82,6 +82,7 @@ const preferences = getPreferences();
 		flipCard,
 		resolveMismatch,
 		PREVIEW_SECONDS,
+		TIME_BONUS_PER_SECOND,
 		type GameState,
 	} from '../../lib/memory-game/engine';
 	import { getThemeSymbols, type ThemeSymbol } from '../../lib/memory-game/themes';
@@ -297,6 +298,7 @@ const preferences = getPreferences();
 					this.clearTimers();
 					playSound('victory');
 					addScore({ score: this.state.score });
+					window.dispatchEvent(new Event('memory-game:scores-updated'));
 					this.showVictoryModal();
 					break;
 
@@ -337,9 +339,11 @@ const preferences = getPreferences();
 		private showVictoryModal(): void {
 			this.modalTitle.textContent = 'VICTORY!';
 			this.modalTitle.className = 'modal-title neon-green';
-			this.modalMessage.textContent = 'All 8 pairs matched in time!';
+			this.modalMessage.textContent = `All ${this.state.totalPairs} pairs matched in time!`;
 			this.modalFinalScore.textContent = String(this.state.score);
-			this.modalTimeBonus.textContent = `+${this.state.roundSecondsRemaining * 10} pts`;
+			this.modalTimeBonus.textContent = `+${
+				this.state.roundSecondsRemaining * TIME_BONUS_PER_SECOND
+			} pts`;
 			this.timeBonusRow.classList.remove('hidden');
 			this.modal.classList.remove('hidden');
 		}

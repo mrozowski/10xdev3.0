@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	getThemeSymbols,
 	getThemeSymbolIds,
-	SOFTWARE_DEV_SYMBOLS,
+	DEV_THEME_SYMBOLS,
 } from './themes';
 
 describe('Theme Registry', () => {
@@ -10,7 +10,7 @@ describe('Theme Registry', () => {
 		const symbols = getThemeSymbols('software-dev');
 
 		expect(symbols).toHaveLength(8);
-		expect(symbols).toBe(SOFTWARE_DEV_SYMBOLS);
+		expect(symbols).toBe(DEV_THEME_SYMBOLS);
 
 		const ids = symbols.map((s) => s.id);
 		const uniqueIds = new Set(ids);

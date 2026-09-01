@@ -1,9 +1,9 @@
 ---
 change_id: first-memory-round
 title: Memory Cards first full round flow
-status: implemented
+status: impl_reviewed
 created: 2026-08-31
-updated: 2026-08-31
+updated: 2026-09-01
 roadmap_ref: S-01
 prd_refs: [FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01]
 ---

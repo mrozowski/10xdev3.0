@@ -14,4 +14,4 @@ I run coding agent inside docker container. This way I can have better control o
 ## Useful skills
 
 * `/10x-lesson`: Add a new lesson/rule for agent
-
+* `npx @przeprogramowani/10x-cli@latest auth` - authenticate

@@ -1,9 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MemoryGame from '../components/game/MemoryGame.astro';
-import { getScores } from '../lib/scores';
-
-const scores = getScores();
 ---
 
 <Layout title="10x Games — Retro Game Collection">
@@ -29,19 +26,7 @@ const scores = getScores();
 		<footer class="retro-footer">
 			<section class="scores-panel">
 				<h3 class="scores-heading">TOP SCORES</h3>
-				<ul id="high-scores-list" class="scores-list">
-					{scores.length === 0 ? (
-						<li class="empty-scores">No scores yet! Complete a round to rank.</li>
-					) : (
-						scores.map((entry, idx) => (
-							<li class="score-entry">
-								<span class="score-rank">#{idx + 1}</span>
-								<span class="score-name">{entry.name}</span>
-								<span class="score-pts">{entry.score} pts</span>
-							</li>
-						))
-					)}
-				</ul>
+				<ul id="high-scores-list" class="scores-list"></ul>
 			</section>
 			<div class="footer-info">
 				<p>10x Games • Device-local play • Zero ads • Zero tracking</p>
@@ -49,6 +34,52 @@ const scores = getScores();
 		</footer>
 	</div>
 </Layout>
+
+<script>
+	import { getScores } from '../lib/scores';
+
+	const scoresList = document.getElementById('high-scores-list');
+
+	function renderHighScores(): void {
+		if (!scoresList) {
+			return;
+		}
+
+		scoresList.replaceChildren();
+		const scores = getScores();
+
+		if (scores.length === 0) {
+			const emptyState = document.createElement('li');
+			emptyState.className = 'empty-scores';
+			emptyState.textContent = 'No scores yet! Complete a round to rank.';
+			scoresList.appendChild(emptyState);
+			return;
+		}
+
+		scores.forEach((entry, index) => {
+			const scoreEntry = document.createElement('li');
+			scoreEntry.className = 'score-entry';
+
+			const rank = document.createElement('span');
+			rank.className = 'score-rank';
+			rank.textContent = `#${index + 1}`;
+
+			const name = document.createElement('span');
+			name.className = 'score-name';
+			name.textContent = entry.name;
+
+			const points = document.createElement('span');
+			points.className = 'score-pts';
+			points.textContent = `${entry.score} pts`;
+
+			scoreEntry.append(rank, name, points);
+			scoresList.appendChild(scoreEntry);
+		});
+	}
+
+	renderHighScores();
+	window.addEventListener('memory-game:scores-updated', renderHighScores);
+</script>
 
 <style>
 	.site-container {

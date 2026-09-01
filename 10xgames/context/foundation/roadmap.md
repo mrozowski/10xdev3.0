@@ -3,7 +3,7 @@ project: "10x Games"
 version: 1
 status: active
 created: 2026-08-31
-updated: 2026-08-31
+updated: 2026-09-01
 prd_version: 2
 main_goal: speed
 top_blocker: time
@@ -24,7 +24,7 @@ milestone_status: open
 
 - **Intent:** Deliver a complete, private, instant-play Memory Cards experience that works on common devices and proves the product's core promise without backend infrastructure.
 - **Source materials:** `context/foundation/prd.md` (v1)
-- **Done when:** every F-01 and S-01 through S-04 below is `done`.
+- **Done when:** every F-01 and S-01 through S-05 below is `done`.
 - **Scope anchors:**
   - FR-001 through FR-009, US-01 through US-04
 
@@ -47,6 +47,7 @@ The product promises instant, private play for a short break: a player should be
 | S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | in-review |
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | proposed |
 | S-04 | animals-card-theme | select and play with an animals card theme | S-01 | FR-003, FR-009, US-04 | proposed |
+| S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | proposed |
 
 ## Baseline
 
@@ -128,6 +129,19 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Risk:** If animal cards are visually ambiguous or slow the initial game load, the new theme hurts matching clarity and the instant-play promise.
 - **Status:** proposed
 
+### S-05: Player can launch Memory Cards from the game catalogue
+
+- **Outcome:** user can see the game catalogue, launch Memory Cards from its catalogue card, and return to the catalogue after play.
+- **Change ID:** game-catalogue-launcher
+- **PRD refs:** FR-001, US-01
+- **Prerequisites:** S-01
+- **Parallel with:** S-03, S-04
+- **Blockers:** —
+- **Unknowns:**
+  - The transition and return affordance must preserve the instant-play feel on mobile and desktop. Owner: team. Block: no.
+- **Risk:** A heavy launcher flow could add friction, while no catalogue boundary makes future games require restructuring.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -137,6 +151,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 | S-02 | local-score-replay | Local score persistence and replay loop | no | Awaiting review |
 | S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Run `/10x-plan progressive-memory-rounds` |
 | S-04 | animals-card-theme | Animals Memory Cards theme | yes | Run `/10x-plan animals-card-theme` |
+| S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Run `/10x-plan game-catalogue-launcher` |
 
 ## Open Roadmap Questions
 
