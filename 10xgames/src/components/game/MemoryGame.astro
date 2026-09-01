@@ -106,7 +106,7 @@ const preferences = getPreferences();
 	import { getThemeSymbols, type ThemeSymbol } from '../../lib/memory-game/themes';
 	import { playSound, initAudioContext } from '../../lib/sound';
 	import { getPreferences, setSoundEnabled } from '../../lib/preferences';
-	import { addScore } from '../../lib/scores';
+	import { addScore, getScores } from '../../lib/scores';
 
 	const MISMATCH_COOLDOWN_MS = 800;
 	const RESIZE_DEBOUNCE_MS = 150;
@@ -188,16 +188,24 @@ const preferences = getPreferences();
 
 				if (this.nextAction === 'restart' && this.pendingScore) {
 					const name = this.scoreNameInput.value.trim();
+					const previousLatestDate = getScores().reduce<string | null>(
+						(latest, entry) => (latest === null || entry.date > latest ? entry.date : latest),
+						null,
+					);
 					const savedScores = addScore({
 						name,
 						score: this.pendingScore.score,
 						roundsCompleted: this.pendingScore.roundsCompleted,
 					});
 					this.pendingScore = null;
-					const newEntryDate = savedScores.reduce<string | null>(
+					const latestDate = savedScores.reduce<string | null>(
 						(latest, entry) => (latest === null || entry.date > latest ? entry.date : latest),
 						null,
 					);
+					// Only the just-saved entry can move the "latest date" forward; if it didn't
+					// change, the new score was truncated out of the top-10 list — don't highlight
+					// a stale, unrelated entry.
+					const newEntryDate = latestDate !== previousLatestDate ? latestDate : undefined;
 					window.dispatchEvent(
 						new CustomEvent('memory-game:scores-updated', { detail: { newEntryDate } }),
 					);
