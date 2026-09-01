@@ -1,6 +1,6 @@
 ---
 project: "10x Games"
-version: 1
+version: 2
 status: active
 created: 2026-08-31
 context_type: greenfield
@@ -31,7 +31,7 @@ The primary persona is an adult familiar with classic games such as Memory Cards
 
 ### Secondary
 
-- Memory Cards offers additional themes beyond the software-development theme.
+- (none currently tracked — the MVP ships with a single software-development theme)
 
 ### Guardrails
 
@@ -68,17 +68,6 @@ The primary persona is an adult familiar with classic games such as Memory Cards
 - Later rounds omit the initial reveal and increase the number of pairs.
 - The player can see which round they are playing.
 
-### US-04: Player chooses an animals card theme
-
-- **Given** a player is configuring a Memory Cards game
-- **When** they select the animals theme
-- **Then** the game uses distinct animal images for its cards
-
-#### Acceptance Criteria
-
-- Animals is available alongside the software-development theme.
-- Animal cards remain recognizable on phone, tablet, and desktop layouts.
-
 ## Functional Requirements
 
 ### Game access and play
@@ -102,9 +91,6 @@ The primary persona is an adult familiar with classic games such as Memory Cards
   > Socrates: Counter-argument considered: visual polish could distract, reduce device responsiveness, or consume core-game time. Resolution: kept; the clean retro presentation is central to the experience.
 - FR-007: Player's completed-round score is saved locally under a generated name unless they optionally enter a name; naming never blocks replay or leaving. Priority: nice-to-have
   > Socrates: Counter-argument considered: naming and persistence could create post-game friction or exceed the core-play scope. Resolution: kept as nice-to-have; scores save automatically under a generated name and optional naming must be frictionless.
-- FR-009: Player can select an animals card theme in addition to the software-development theme. Theme selection changes card imagery only and must not alter Memory Cards rules or progression. Priority: should-have
-  > Socrates: Counter-argument considered: another theme can delay the core game. Resolution: kept; animals adds clear variety through a contained, asset-focused extension of the existing theme system.
-
 ## Non-Functional Requirements
 
 - The product displays no advertisements and collects no player data.
@@ -114,7 +100,7 @@ The primary persona is an adult familiar with classic games such as Memory Cards
 
 ## Business Logic
 
-The selected theme determines the images shown on Memory Cards. The MVP includes software-development and animals themes; other themes, such as plants, remain future options.
+The selected theme determines the images shown on Memory Cards. The MVP ships with a single software-development theme; additional visual themes are not planned. Post-MVP growth is expected to come from adding new games rather than new Memory Cards themes.
 
 The player starts at round one. The first round briefly reveals all card images before turning them face down. The player selects pairs; each successful pair earns points, and the round ends when all pairs are found within its time limit.
 
@@ -126,7 +112,7 @@ No login is required. Players may enter a local name to label their high scores 
 
 ## Non-Goals
 
-- Additional games are post-MVP so the first release can focus on one complete Memory Cards experience.
+- Additional games are post-MVP so the first release can focus on one complete Memory Cards experience. Once the MVP ships, adding new games — not new Memory Cards themes — is the planned growth direction.
 - Accounts and cloud score syncing are excluded to preserve immediate, private play.
 - A backend and database are excluded from the MVP.
 - A custom ranking system is excluded from the MVP.

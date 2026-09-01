@@ -1,6 +1,6 @@
 ---
 project: "10x Games"
-version: 1
+version: 2
 status: active
 created: 2026-08-31
 updated: 2026-09-01
@@ -24,13 +24,13 @@ milestone_status: open
 
 - **Intent:** Deliver a complete, private, instant-play Memory Cards experience that works on common devices and proves the product's core promise without backend infrastructure.
 - **Source materials:** `context/foundation/prd.md` (v1)
-- **Done when:** every F-01 and S-01 through S-05 below is `done`.
+- **Done when:** every F-01 and S-01, S-02, S-03, S-05 below is `done`.
 - **Scope anchors:**
-  - FR-001 through FR-009, US-01 through US-04
+  - FR-001 through FR-008, US-01 through US-03
 
 ## Vision recap
 
-The product promises instant, private play for a short break: a player should be able to open the site, choose Memory Cards, and start a complete, progressively harder game without sign-up or installation. The MVP stays deliberately narrow: one polished retro game with multiple visual themes, local score storage, and no backend or account system.
+The product promises instant, private play for a short break: a player should be able to open the site, choose Memory Cards, and start a complete, progressively harder game without sign-up or installation. The MVP stays deliberately narrow: one polished retro game with local score storage, and no backend or account system. Post-MVP growth is expected to come from adding new games, not new Memory Cards themes.
 
 ## North star
 
@@ -46,7 +46,6 @@ The product promises instant, private play for a short break: a player should be
 | S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | done |
 | S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | in-review |
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | in-progress |
-| S-04 | animals-card-theme | select and play with an animals card theme | S-01 | FR-003, FR-009, US-04 | proposed |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | proposed |
 
 ## Baseline
@@ -109,25 +108,12 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Change ID:** progressive-memory-rounds
 - **PRD refs:** FR-004, FR-008, US-03
 - **Prerequisites:** S-01
-- **Parallel with:** S-04
+- **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
   - Pair counts and time limits must preserve a playable layout on phones, tablets, and desktop screens. Owner: team. Block: no.
 - **Risk:** Difficulty that rises too sharply or produces an unusable board on smaller screens undermines the short, approachable play experience.
 - **Status:** in-progress
-
-### S-04: Player can select and play with an animals card theme
-
-- **Outcome:** user can choose animals as a Memory Cards theme and play every round using distinct, recognizable animal card imagery.
-- **Change ID:** animals-card-theme
-- **PRD refs:** FR-003, FR-009, US-04
-- **Prerequisites:** S-01
-- **Parallel with:** S-03
-- **Blockers:** —
-- **Unknowns:**
-  - Animal assets must remain lightweight and distinguishable at mobile card sizes. Owner: team. Block: no.
-- **Risk:** If animal cards are visually ambiguous or slow the initial game load, the new theme hurts matching clarity and the instant-play promise.
-- **Status:** proposed
 
 ### S-05: Player can launch Memory Cards from the game catalogue
 
@@ -135,7 +121,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Change ID:** game-catalogue-launcher
 - **PRD refs:** FR-001, US-01
 - **Prerequisites:** S-01
-- **Parallel with:** S-03, S-04
+- **Parallel with:** S-03
 - **Blockers:** —
 - **Unknowns:**
   - The transition and return affordance must preserve the instant-play feel on mobile and desktop. Owner: team. Block: no.
@@ -150,7 +136,6 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 | S-01 | first-memory-round | Memory Cards first full round flow | yes | Implemented |
 | S-02 | local-score-replay | Local score persistence and replay loop | no | Awaiting review |
 | S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Run `/10x-plan progressive-memory-rounds` |
-| S-04 | animals-card-theme | Animals Memory Cards theme | yes | Run `/10x-plan animals-card-theme` |
 | S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Run `/10x-plan game-catalogue-launcher` |
 
 ## Open Roadmap Questions
@@ -159,7 +144,8 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 
 ## Parked
 
-- **Additional games beyond Memory Cards** — Why parked: the PRD's Non-Goals says this is post-MVP and the milestone is intentionally scoped to one complete Memory Cards experience.
+- **Animals card theme (S-04, `animals-card-theme`)** — Why parked: product decision to keep Memory Cards to its single software-development theme; no change folder was started, so this slice is dropped rather than deferred. Growth focus shifts to new games instead of new themes.
+- **Additional games beyond Memory Cards** — Why parked: the current milestone (M-01) is scoped to shipping one complete Memory Cards experience first; once M-01 closes, a new milestone for additional games is the planned next step.
 - **Accounts and cloud score syncing** — Why parked: Access Control and Non-Goals explicitly exclude login and backend-based syncing in favor of private, device-local play.
 
 ## Milestone History
