@@ -21,3 +21,4 @@ No test runner, single-test command, linter, or lint script is configured yet.
 - Preserve Astro's static-output model. Configure `site` and any required `base` path in `astro.config.mjs` as part of GitHub Pages deployment work.
 - Foundation documents under `context/foundation/` are living documents: update them in place when product decisions change. Change-scoped planning belongs in `context/changes/<change-id>/`; do not modify `context/archive/`, which is immutable by convention.
 - `CLAUDE.md` is a symlink to this file. Keep project-specific agent guidance here and avoid duplicating it across agent configuration files.
+- Astro scopes `<style>` blocks per-component by default. When a CSS rule must reach markup rendered outside the component's own template (slots, dynamically injected markup, shared/child markup), use `:global()` or a global stylesheet — plain scoped styles will not apply.
