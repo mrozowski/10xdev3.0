@@ -276,7 +276,7 @@ After getting initial clarifications from the user, NOW is when you address the 
    - Read the specific files/directories they mention
    - Only proceed once you've verified the facts yourself
 
-3. **Create research tasks** using your AI coding assistant's task creation feature to track exploration (these appear in the user's status bar). Update them via your AI coding assistant's task update feature as research completes.
+3. **Create research tasks** using the AI assistant's task creation feature to track exploration (these appear in the user's status bar). Update them via the AI assistant's task update feature as research completes.
 
 4. **Spawn parallel sub-tasks for comprehensive research**:
    - Create multiple Task agents to research different aspects concurrently
@@ -635,7 +635,7 @@ Do this in Step 4 (right after the `change.md` → `planned` stamp). The lookup 
    - and in the `## Foundations` / `## Slices` bodies — the `### <ID>: …` block that contains a `- **Change ID:** <change-id>` line.
 
    Match is exact-string only. **No match** → print `ℹ context/foundation/roadmap.md has no item with Change ID "<change-id>" — roadmap left untouched.` and stop here.
-3. **Match found** → if the item's `- **Status:**` is already `planning`, `in-progress`, or `done`, leave it untouched (**forward-only**: never regress a more-advanced status) and stop. Otherwise apply both edits with a file editing tool — each independent and best effort; skip a sub-edit whose target isn't where the `/10x-roadmap` template puts it, and note the skip. Touch only the `Status` field:
+3. **Match found** → if the item's `- **Status:**` is already `planning`, `in-progress`, or `done`, leave it untouched (**forward-only**: never regress a more-advanced status) and stop. Otherwise apply both edits with the AI assistant's file editing feature — each independent and best effort; skip a sub-edit whose target isn't where the `/10x-roadmap` template puts it, and note the skip. Touch only the `Status` field:
    1. **`## At a glance`** — set the matched row's **Status** cell to `planning`.
    2. **Item body** — rewrite the item's `- **Status:**` line to `- **Status:** planning`.
 
@@ -669,7 +669,7 @@ Do this in Step 4 (right after the `change.md` → `planned` stamp). The lookup 
    - Include "what we're NOT doing"
 
 5. **Track Progress**:
-   - Use your AI coding assistant's task creation feature to create planning tasks and its task update feature to mark them completed as you progress
+   - Use the AI assistant's task creation feature to create planning tasks and the AI assistant's task update feature to mark them completed as you progress
    - Tasks appear in the user's status bar for visibility
    - Mark tasks completed as you finish research areas
 
@@ -701,8 +701,8 @@ Do this in Step 4 (right after the `change.md` → `planned` stamp). The lookup 
 
 **Always separate success criteria into two categories:**
 
-11. **Automated Verification** — commands agents can run: `make test`, `npm run lint`, type checks, specific file existence
-12. **Manual Verification** — human testing: UI/UX, real-world performance, edge cases, user acceptance
+1. **Automated Verification** — commands agents can run: `make test`, `npm run lint`, type checks, specific file existence
+2. **Manual Verification** — human testing: UI/UX, real-world performance, edge cases, user acceptance
 
 Each phase's success criteria should use `- [ ]` checkboxes under `#### Automated Verification:` and `#### Manual Verification:` headings.
 
