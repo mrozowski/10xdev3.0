@@ -150,10 +150,10 @@ the change adds tests only.
 
 #### Automated
 
-- [x] 1.1 Add the three focused pair-matching state-transition unit tests
-- [x] 1.2 Run the focused engine unit suite
-- [x] 1.3 Run Astro type checking and production build
+- [x] 1.1 Add the three focused pair-matching state-transition unit tests — 2f3fb1d
+- [x] 1.2 Run the focused engine unit suite — 2f3fb1d
+- [x] 1.3 Run Astro type checking and production build — 2f3fb1d
 
 #### Manual
 
-- [x] 1.4 Confirm the tests remain unit-only and cover the selected scenarios
+- [x] 1.4 Confirm the tests remain unit-only and cover the selected scenarios — 2f3fb1d

@@ -1,7 +1,7 @@
 ---
 change_id: testing-pair-matching-contract
 title: Pair-matching unit-test contract
-status: implementing
+status: implemented
 created: 2026-09-01
 updated: 2026-09-01
 roadmap_ref: S-01, S-03
