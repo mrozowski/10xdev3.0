@@ -180,11 +180,11 @@ Not applicable — no stored data shape changes; `scores.ts`'s existing `ScoreEn
 
 #### Automated
 
-- [x] 2.1 npm run test passes (full existing suite, no regressions)
-- [x] 2.2 npm run astro -- check reports no new type errors
+- [x] 2.1 npm run test passes (full existing suite, no regressions) — 1aa24cd
+- [x] 2.2 npm run astro -- check reports no new type errors — 1aa24cd
 
 #### Manual
 
-- [x] 2.3 Newly saved entry visibly flashes once in the TOP SCORES list
-- [x] 2.4 Only the most recently saved entry highlights, not prior ones
-- [x] 2.5 Initial page load shows no highlighted rows
+- [x] 2.3 Newly saved entry visibly flashes once in the TOP SCORES list — 1aa24cd
+- [x] 2.4 Only the most recently saved entry highlights, not prior ones — 1aa24cd
+- [x] 2.5 Initial page load shows no highlighted rows — 1aa24cd

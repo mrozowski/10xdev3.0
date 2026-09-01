@@ -1,7 +1,7 @@
 ---
 change_id: local-score-replay
 title: Local score naming and highlight on replay
-status: implementing
+status: implemented
 created: 2026-09-01
 updated: 2026-09-01
 roadmap_ref: S-02
