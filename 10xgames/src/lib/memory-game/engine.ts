@@ -3,6 +3,7 @@ export type GameStatus =
 	| 'preview'
 	| 'playing'
 	| 'checking'
+	| 'round_complete'
 	| 'completed'
 	| 'time_up';
 
@@ -23,9 +24,11 @@ export interface GameState {
 	totalPairs: number;
 	previewSecondsRemaining: number;
 	roundSecondsRemaining: number;
+	round: number;
+	roundsTotal: number;
 }
 
-export type FlipEvent = 'flip' | 'match' | 'mismatch' | 'completed';
+export type FlipEvent = 'flip' | 'match' | 'mismatch' | 'round_complete' | 'completed';
 
 export interface FlipResult {
 	nextState: GameState;
@@ -38,6 +41,26 @@ export const BASE_MATCH_POINTS = 150;
 export const COMBO_MULTIPLIER_POINTS = 50;
 export const MISMATCH_PENALTY_POINTS = 25;
 export const TIME_BONUS_PER_SECOND = 10;
+
+/**
+ * Fixed 5-round difficulty curve: round 1 shows the preview reveal, later
+ * rounds skip it and increase the pair count while keeping the round timer flat.
+ */
+export interface RoundDifficulty {
+	round: number;
+	totalPairs: number;
+	skipPreview: boolean;
+}
+
+export const ROUND_DIFFICULTY: readonly RoundDifficulty[] = [
+	{ round: 1, totalPairs: 8, skipPreview: false },
+	{ round: 2, totalPairs: 10, skipPreview: true },
+	{ round: 3, totalPairs: 12, skipPreview: true },
+	{ round: 4, totalPairs: 14, skipPreview: true },
+	{ round: 5, totalPairs: 16, skipPreview: true },
+] as const;
+
+export const TOTAL_ROUNDS = ROUND_DIFFICULTY.length;
 
 /**
  * Standard Fisher-Yates shuffle algorithm.
@@ -53,13 +76,28 @@ export function shuffle<T>(items: readonly T[]): T[] {
 	return array;
 }
 
+export interface CreateGameStateOptions {
+	round?: number;
+	roundsTotal?: number;
+	initialScore?: number;
+	skipPreview?: boolean;
+}
+
 /**
  * Creates the initial game state with shuffled card pairs.
  */
 export function createInitialGameState(
 	symbolIds: string[],
 	totalPairs: number = 8,
+	options: CreateGameStateOptions = {},
 ): GameState {
+	const {
+		round = 1,
+		roundsTotal = 1,
+		initialScore = 0,
+		skipPreview = false,
+	} = options;
+
 	const selectedSymbols = symbolIds.slice(0, totalPairs);
 	if (selectedSymbols.length < totalPairs) {
 		throw new Error(
@@ -76,21 +114,44 @@ export function createInitialGameState(
 	const cards: Card[] = shuffled.map((card, index) => ({
 		id: index,
 		symbolId: card.symbolId,
-		isFlipped: true, // Initially flipped face-up during preview
+		isFlipped: !skipPreview, // Initially flipped face-up during preview, face-down when skipped
 		isMatched: false,
 	}));
 
 	return {
-		status: 'preview',
+		status: skipPreview ? 'playing' : 'preview',
 		cards,
 		flippedIndices: [],
-		score: 0,
+		score: initialScore,
 		combo: 0,
 		matchedPairs: 0,
 		totalPairs,
-		previewSecondsRemaining: PREVIEW_SECONDS,
+		previewSecondsRemaining: skipPreview ? 0 : PREVIEW_SECONDS,
 		roundSecondsRemaining: ROUND_SECONDS,
+		round,
+		roundsTotal,
 	};
+}
+
+/**
+ * Starts a specific round of the progression, looking up its difficulty from
+ * `ROUND_DIFFICULTY` (clamping to the last entry if `round` exceeds `TOTAL_ROUNDS`)
+ * and carrying the player's score forward from the previous round.
+ */
+export function startRound(
+	round: number,
+	symbolIds: string[],
+	previousScore: number = 0,
+): GameState {
+	const clampedRound = Math.min(Math.max(round, 1), TOTAL_ROUNDS);
+	const difficulty = ROUND_DIFFICULTY[clampedRound - 1];
+
+	return createInitialGameState(symbolIds, difficulty.totalPairs, {
+		round: difficulty.round,
+		roundsTotal: TOTAL_ROUNDS,
+		initialScore: previousScore,
+		skipPreview: difficulty.skipPreview,
+	});
 }
 
 /**
@@ -214,17 +275,18 @@ export function flipCard(state: GameState, cardIndex: number): FlipResult {
 					nextScore,
 					state.roundSecondsRemaining,
 				);
+				const isFinalRound = state.round >= state.roundsTotal;
 				return {
 					nextState: {
 						...state,
-						status: 'completed',
+						status: isFinalRound ? 'completed' : 'round_complete',
 						cards: matchedCards,
 						flippedIndices: [],
 						score: finalScore,
 						combo: nextCombo,
 						matchedPairs: nextMatchedPairs,
 					},
-					event: 'completed',
+					event: isFinalRound ? 'completed' : 'round_complete',
 				};
 			}
 

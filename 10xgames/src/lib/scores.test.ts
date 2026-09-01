@@ -71,4 +71,27 @@ describe('addScore', () => {
 
 		expect(getScores().map(({ score }) => score)).toEqual([42]);
 	});
+
+	it('round-trips roundsCompleted when provided', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-08-31T20:00:00.000Z'));
+
+		expect(addScore({ name: 'Ada', score: 42, roundsCompleted: 5 })).toEqual([
+			{ name: 'Ada', score: 42, date: '2026-08-31T20:00:00.000Z', roundsCompleted: 5 },
+		]);
+		expect(getScores()).toEqual([
+			{ name: 'Ada', score: 42, date: '2026-08-31T20:00:00.000Z', roundsCompleted: 5 },
+		]);
+	});
+
+	it('still validates a stored entry lacking roundsCompleted', () => {
+		localStorage.setItem(
+			'10xgames:scores',
+			JSON.stringify([{ name: 'Ada', score: 42, date: '2026-08-31T20:00:00.000Z' }]),
+		);
+
+		expect(getScores()).toEqual([
+			{ name: 'Ada', score: 42, date: '2026-08-31T20:00:00.000Z' },
+		]);
+	});
 });

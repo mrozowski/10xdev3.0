@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	createInitialGameState,
+	startRound,
 	tickPreview,
 	tickTimer,
 	flipCard,
@@ -12,10 +13,12 @@ import {
 	TIME_BONUS_PER_SECOND,
 	PREVIEW_SECONDS,
 	ROUND_SECONDS,
+	ROUND_DIFFICULTY,
+	TOTAL_ROUNDS,
 	type GameState,
 } from './engine';
 
-const TEST_SYMBOLS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+const TEST_SYMBOLS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'];
 
 describe('Memory Game Engine', () => {
 	describe('createInitialGameState', () => {
@@ -33,12 +36,12 @@ describe('Memory Game Engine', () => {
 			expect(state.cards.every((c) => c.isFlipped === true)).toBe(true);
 			expect(state.cards.every((c) => c.isMatched === false)).toBe(true);
 
-			// Check that each symbol appears exactly twice
+			// Check that each of the first 8 symbols appears exactly twice
 			const symbolCounts: Record<string, number> = {};
 			for (const card of state.cards) {
 				symbolCounts[card.symbolId] = (symbolCounts[card.symbolId] || 0) + 1;
 			}
-			for (const symbol of TEST_SYMBOLS) {
+			for (const symbol of TEST_SYMBOLS.slice(0, 8)) {
 				expect(symbolCounts[symbol]).toBe(2);
 			}
 		});
@@ -47,6 +50,69 @@ describe('Memory Game Engine', () => {
 			expect(() => createInitialGameState(['a', 'b'], 4)).toThrow(
 				/Not enough unique symbols/,
 			);
+		});
+
+		it('defaults to round 1 of 1 with no explicit round options', () => {
+			const state = createInitialGameState(TEST_SYMBOLS, 8);
+
+			expect(state.round).toBe(1);
+			expect(state.roundsTotal).toBe(1);
+		});
+
+		it('supports skipPreview to start directly in playing status with cards face down', () => {
+			const state = createInitialGameState(TEST_SYMBOLS, 10, {
+				round: 2,
+				roundsTotal: 5,
+				initialScore: 500,
+				skipPreview: true,
+			});
+
+			expect(state.status).toBe('playing');
+			expect(state.score).toBe(500);
+			expect(state.round).toBe(2);
+			expect(state.roundsTotal).toBe(5);
+			expect(state.previewSecondsRemaining).toBe(0);
+			expect(state.cards.every((c) => c.isFlipped === false)).toBe(true);
+		});
+	});
+
+	describe('ROUND_DIFFICULTY / startRound', () => {
+		it('defines exactly 5 rounds with the expected pair counts and preview rule', () => {
+			expect(TOTAL_ROUNDS).toBe(5);
+			expect(ROUND_DIFFICULTY).toEqual([
+				{ round: 1, totalPairs: 8, skipPreview: false },
+				{ round: 2, totalPairs: 10, skipPreview: true },
+				{ round: 3, totalPairs: 12, skipPreview: true },
+				{ round: 4, totalPairs: 14, skipPreview: true },
+				{ round: 5, totalPairs: 16, skipPreview: true },
+			]);
+		});
+
+		it('starts round 1 with a preview and zero carried-over score', () => {
+			const state = startRound(1, TEST_SYMBOLS, 0);
+
+			expect(state.status).toBe('preview');
+			expect(state.round).toBe(1);
+			expect(state.roundsTotal).toBe(5);
+			expect(state.totalPairs).toBe(8);
+			expect(state.score).toBe(0);
+		});
+
+		it('starts round 2+ without a preview and carries the score forward', () => {
+			const state = startRound(3, TEST_SYMBOLS, 750);
+
+			expect(state.status).toBe('playing');
+			expect(state.round).toBe(3);
+			expect(state.totalPairs).toBe(12);
+			expect(state.score).toBe(750);
+			expect(state.cards.every((c) => c.isFlipped === false)).toBe(true);
+		});
+
+		it('clamps a round number beyond TOTAL_ROUNDS to the last round', () => {
+			const state = startRound(99, TEST_SYMBOLS, 100);
+
+			expect(state.round).toBe(5);
+			expect(state.totalPairs).toBe(16);
 		});
 	});
 
@@ -141,6 +207,8 @@ describe('Memory Game Engine', () => {
 				totalPairs: 2,
 				previewSecondsRemaining: 0,
 				roundSecondsRemaining: 40,
+				round: 1,
+				roundsTotal: 1,
 			};
 		}
 
@@ -224,6 +292,29 @@ describe('Memory Game Engine', () => {
 
 			expect(mismatchState.score).toBe(0);
 		});
+
+		it('emits round_complete (not completed) when an earlier round finishes', () => {
+			const state: GameState = { ...getPlayingState(), round: 2, roundsTotal: 5 };
+			const { nextState: flip1 } = flipCard(state, 0);
+			const { nextState: match1 } = flipCard(flip1, 1); // git/git matched
+			const { nextState: flip2 } = flipCard(match1, 2);
+			const { nextState: roundCompleteState, event } = flipCard(flip2, 3); // code/code matched -> round complete
+
+			expect(event).toBe('round_complete');
+			expect(roundCompleteState.status).toBe('round_complete');
+			expect(roundCompleteState.matchedPairs).toBe(2);
+		});
+
+		it('emits completed when the final round finishes', () => {
+			const state: GameState = { ...getPlayingState(), round: 5, roundsTotal: 5 };
+			const { nextState: flip1 } = flipCard(state, 0);
+			const { nextState: match1 } = flipCard(flip1, 1); // git/git matched
+			const { nextState: flip2 } = flipCard(match1, 2);
+			const { nextState: completedState, event } = flipCard(flip2, 3); // code/code matched -> completed
+
+			expect(event).toBe('completed');
+			expect(completedState.status).toBe('completed');
+		});
 	});
 
 	describe('resolveMismatch', () => {
@@ -244,6 +335,8 @@ describe('Memory Game Engine', () => {
 				totalPairs: 2,
 				previewSecondsRemaining: 0,
 				roundSecondsRemaining: 30,
+				round: 1,
+				roundsTotal: 1,
 			};
 
 			const resolved = resolveMismatch(checkingState);
