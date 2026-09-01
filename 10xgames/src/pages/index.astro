@@ -84,7 +84,7 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 			summary.topScore === null ? 'No scores yet' : `Top score: ${summary.topScore} pts`;
 	}
 
-	function renderHighScores(): void {
+	function renderHighScores(highlightDate?: string): void {
 		if (!scoresList) {
 			return;
 		}
@@ -103,6 +103,9 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		scores.forEach((entry, index) => {
 			const scoreEntry = document.createElement('li');
 			scoreEntry.className = 'score-entry';
+			if (highlightDate && entry.date === highlightDate) {
+				scoreEntry.classList.add('newly-saved');
+			}
 
 			const rank = document.createElement('span');
 			rank.className = 'score-rank';
@@ -126,9 +129,10 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 
 	renderCatalogueSummary();
 	renderHighScores();
-	window.addEventListener('memory-game:scores-updated', () => {
+	window.addEventListener('memory-game:scores-updated', (event) => {
+		const newEntryDate = (event as CustomEvent<{ newEntryDate?: string }>).detail?.newEntryDate;
 		renderCatalogueSummary();
-		renderHighScores();
+		renderHighScores(newEntryDate);
 	});
 </script>
 
@@ -436,5 +440,20 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		font-family: ui-monospace, monospace;
 		text-align: center;
 		padding: 0.5rem 0;
+	}
+
+	#high-scores-list .score-entry.newly-saved {
+		animation: scoreEntryFlash 1.6s ease-out;
+	}
+
+	@keyframes scoreEntryFlash {
+		0% {
+			background: rgba(0, 255, 159, 0.35);
+			box-shadow: 0 0 12px rgba(0, 255, 159, 0.6);
+		}
+		100% {
+			background: #0b0f16;
+			box-shadow: none;
+		}
 	}
 </style>
