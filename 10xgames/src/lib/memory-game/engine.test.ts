@@ -253,6 +253,16 @@ describe('Memory Game Engine', () => {
 			expect(matchState.status).toBe('playing');
 		});
 
+		it('ignores re-clicking a matched card', () => {
+			const state = getPlayingState();
+			const { nextState: firstFlip } = flipCard(state, 0);
+			const { nextState: matchState } = flipCard(firstFlip, 1);
+			const { nextState, event } = flipCard(matchState, 0);
+
+			expect(nextState).toBe(matchState);
+			expect(event).toBeUndefined();
+		});
+
 		it('increases combo multiplier on consecutive matches', () => {
 			const state = getPlayingState();
 			const { nextState: flip1 } = flipCard(state, 0);
@@ -285,12 +295,37 @@ describe('Memory Game Engine', () => {
 			expect(mismatchState.cards[2].isFlipped).toBe(true);
 		});
 
+		it('ignores a third card click while a mismatch is pending', () => {
+			const state = getPlayingState();
+			const { nextState: firstFlip } = flipCard(state, 0);
+			const { nextState: mismatchState } = flipCard(firstFlip, 2);
+			const { nextState, event } = flipCard(mismatchState, 1);
+
+			expect(nextState).toBe(mismatchState);
+			expect(event).toBeUndefined();
+		});
+
 		it('prevents negative scores on penalty', () => {
 			const state = getPlayingState();
 			const { nextState: flip1 } = flipCard(state, 0);
 			const { nextState: mismatchState } = flipCard(flip1, 2);
 
 			expect(mismatchState.score).toBe(0);
+		});
+
+		it('allows a new match after resolving a mismatch', () => {
+			const state = getPlayingState();
+			const { nextState: firstFlip } = flipCard(state, 0);
+			const { nextState: mismatchState } = flipCard(firstFlip, 2);
+			const resolvedState = resolveMismatch(mismatchState);
+			const { nextState: nextFlip } = flipCard(resolvedState, 1);
+			const { nextState: matchState, event } = flipCard(nextFlip, 0);
+
+			expect(event).toBe('match');
+			expect(matchState.status).toBe('playing');
+			expect(matchState.matchedPairs).toBe(1);
+			expect(matchState.cards[0].isMatched).toBe(true);
+			expect(matchState.cards[1].isMatched).toBe(true);
 		});
 
 		it('emits round_complete (not completed) when an earlier round finishes', () => {
