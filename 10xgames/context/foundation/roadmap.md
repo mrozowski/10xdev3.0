@@ -46,7 +46,7 @@ The product promises instant, private play for a short break: a player should be
 | S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | done |
 | S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | in-review |
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | in-progress |
-| S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | proposed |
+| S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | in-progress |
 
 ## Baseline
 
@@ -126,7 +126,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Unknowns:**
   - The transition and return affordance must preserve the instant-play feel on mobile and desktop. Owner: team. Block: no.
 - **Risk:** A heavy launcher flow could add friction, while no catalogue boundary makes future games require restructuring.
-- **Status:** proposed
+- **Status:** planning
 
 ## Backlog Handoff
 
