@@ -14,13 +14,31 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 			<p class="tagline">Instant, private, retro browser games.</p>
 		</header>
 
-		<!-- Main Game Area & Catalogue Switcher -->
-		<div id="view-game" class="game-view-container">
-			<div class="game-top-bar">
-				<h1 class="active-game-heading">MEMORY CARDS</h1>
-			</div>
-			<MemoryGame />
-		</div>
+		<main class="view-shell">
+			<section id="catalogue-view" class="catalogue-view">
+				<div class="catalogue-header">
+					<h1 class="catalogue-heading">CHOOSE YOUR GAME</h1>
+				</div>
+				<div class="catalogue-grid">
+					<button class="game-card" type="button" data-game-launch="memory-cards" aria-label="Launch Memory Cards">
+						<span class="game-card-icon">🧠</span>
+						<span class="game-card-title">MEMORY CARDS</span>
+						<span class="game-card-subtitle">Match every pair before the timer runs out.</span>
+						<span id="memory-cards-score-summary" class="game-card-score">No scores yet</span>
+					</button>
+				</div>
+			</section>
+
+			<section id="game-view" class="game-view-container hidden" aria-live="polite">
+				<div class="game-top-bar">
+					<button id="btn-back-to-catalogue" class="retro-btn secondary-btn" type="button">
+						← CATALOGUE
+					</button>
+					<h1 class="active-game-heading">MEMORY CARDS</h1>
+				</div>
+				<MemoryGame />
+			</section>
+		</main>
 
 		<!-- High Scores & Footer -->
 		<footer class="retro-footer">
@@ -36,11 +54,37 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 </Layout>
 
 <script>
+	import { getGameTopScoreSummary } from '../lib/catalog';
 	import { getScores } from '../lib/scores';
 
 	const scoresList = document.getElementById('high-scores-list');
+	const catalogueView = document.getElementById('catalogue-view');
+	const gameView = document.getElementById('game-view');
+	const launchButton = document.querySelector('[data-game-launch="memory-cards"]');
+	const backButton = document.getElementById('btn-back-to-catalogue');
+	const memoryCardScoreSummary = document.getElementById('memory-cards-score-summary');
 
-	function renderHighScores(): void {
+	function setView(view: 'catalogue' | 'game'): void {
+		if (!catalogueView || !gameView) {
+			return;
+		}
+
+		const isCatalogue = view === 'catalogue';
+		catalogueView.classList.toggle('hidden', !isCatalogue);
+		gameView.classList.toggle('hidden', isCatalogue);
+	}
+
+	function renderCatalogueSummary(): void {
+		if (!memoryCardScoreSummary) {
+			return;
+		}
+
+		const summary = getGameTopScoreSummary('memory-cards');
+		memoryCardScoreSummary.textContent =
+			summary.topScore === null ? 'No scores yet' : `Top score: ${summary.topScore} pts`;
+	}
+
+	function renderHighScores(highlightDate?: string): void {
 		if (!scoresList) {
 			return;
 		}
@@ -59,6 +103,9 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		scores.forEach((entry, index) => {
 			const scoreEntry = document.createElement('li');
 			scoreEntry.className = 'score-entry';
+			if (highlightDate && entry.date === highlightDate) {
+				scoreEntry.classList.add('newly-saved');
+			}
 
 			const rank = document.createElement('span');
 			rank.className = 'score-rank';
@@ -77,8 +124,16 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		});
 	}
 
+	launchButton?.addEventListener('click', () => setView('game'));
+	backButton?.addEventListener('click', () => setView('catalogue'));
+
+	renderCatalogueSummary();
 	renderHighScores();
-	window.addEventListener('memory-game:scores-updated', renderHighScores);
+	window.addEventListener('memory-game:scores-updated', (event) => {
+		const newEntryDate = (event as CustomEvent<{ newEntryDate?: string }>).detail?.newEntryDate;
+		renderCatalogueSummary();
+		renderHighScores(newEntryDate);
+	});
 </script>
 
 <style>
@@ -135,18 +190,107 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 	}
 
 	/* Game View */
+	.view-shell {
+		width: 100%;
+	}
+
+	.catalogue-view,
 	.game-view-container {
+		width: 100%;
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
 		align-items: center;
+	}
+
+	.hidden {
+		display: none !important;
+	}
+
+	.catalogue-header {
 		width: 100%;
+		max-width: 640px;
+		text-align: center;
+	}
+
+	.catalogue-heading {
+		font-family: ui-monospace, monospace;
+		font-size: 1.15rem;
+		font-weight: 800;
+		letter-spacing: 0.12em;
+		color: #ffe600;
+		margin: 0;
+		text-shadow: 0 0 12px rgba(255, 230, 0, 0.4);
+	}
+
+	.catalogue-grid {
+		width: 100%;
+		max-width: 640px;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 1rem;
+	}
+
+	.game-card {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 1.2rem 1rem;
+		border: 2px solid #232d3d;
+		background: linear-gradient(180deg, rgba(17, 22, 32, 0.98), rgba(12, 16, 24, 0.96));
+		border-radius: 12px;
+		color: #e5ebf5;
+		text-align: left;
+		cursor: pointer;
+		transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+		box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
+	}
+
+	.game-card:hover,
+	.game-card:focus-visible {
+		transform: translateY(-2px);
+		border-color: #00f0ff;
+		box-shadow: 0 0 18px rgba(0, 240, 255, 0.2);
+		outline: none;
+	}
+
+	.game-card-icon {
+		font-size: 2.2rem;
+		line-height: 1;
+	}
+
+	.game-card-title {
+		font-family: ui-monospace, monospace;
+		font-size: 1.1rem;
+		font-weight: 800;
+		letter-spacing: 0.08em;
+		color: #00ff9f;
+	}
+
+	.game-card-subtitle {
+		font-size: 0.78rem;
+		line-height: 1.5;
+		color: #c2c9d6;
+	}
+
+	.game-card-score {
+		margin-top: auto;
+		font-family: ui-monospace, monospace;
+		font-size: 0.72rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #00f0ff;
 	}
 
 	.game-top-bar {
 		width: 100%;
 		max-width: 640px;
-		text-align: center;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
 	}
 
 	.active-game-heading {
@@ -157,6 +301,45 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		letter-spacing: 0.08em;
 		margin: 0;
 		text-shadow: 0 0 10px rgba(0, 255, 159, 0.4);
+	}
+
+	.retro-btn {
+		border: 2px solid #232d3d;
+		background: #111620;
+		color: #e5ebf5;
+		padding: 0.6rem 0.9rem;
+		border-radius: 10px;
+		font-family: ui-monospace, monospace;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		cursor: pointer;
+		transition: border-color 0.15s ease, transform 0.15s ease;
+	}
+
+	.retro-btn:hover,
+	.retro-btn:focus-visible {
+		border-color: #00f0ff;
+		transform: translateY(-1px);
+		outline: none;
+	}
+
+	.secondary-btn {
+		background: rgba(17, 22, 32, 0.9);
+	}
+
+	@media (max-width: 560px) {
+		.game-top-bar {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.active-game-heading {
+			font-size: 1rem;
+		}
+
+		.catalogue-heading {
+			font-size: 0.9rem;
+		}
 	}
 
 	/* Scores Panel */
@@ -257,5 +440,20 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		font-family: ui-monospace, monospace;
 		text-align: center;
 		padding: 0.5rem 0;
+	}
+
+	#high-scores-list .score-entry.newly-saved {
+		animation: scoreEntryFlash 1.6s ease-out;
+	}
+
+	@keyframes scoreEntryFlash {
+		0% {
+			background: rgba(0, 255, 159, 0.35);
+			box-shadow: 0 0 12px rgba(0, 255, 159, 0.6);
+		}
+		100% {
+			background: #0b0f16;
+			box-shadow: none;
+		}
 	}
 </style>
