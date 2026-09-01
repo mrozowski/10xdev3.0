@@ -166,25 +166,25 @@ Not applicable — no stored data shape changes; `scores.ts`'s existing `ScoreEn
 
 #### Automated
 
-- [x] 1.1 npm run test passes (full existing suite, no regressions)
-- [x] 1.2 npm run astro -- check reports no new type errors
+- [x] 1.1 npm run test passes (full existing suite, no regressions) — 38e69f9
+- [x] 1.2 npm run astro -- check reports no new type errors — 38e69f9
 
 #### Manual
 
-- [x] 1.3 Modal shows empty name input on victory/game-over; score not saved until button click
-- [x] 1.4 Named save and blank-name (Anonymous) save both work correctly
-- [x] 1.5 Intermediate round-complete modal shows no name input and does not save
-- [x] 1.6 Action button saves and restarts a fresh round 1 after victory/game-over
+- [x] 1.3 Modal shows empty name input on victory/game-over; score not saved until button click — 38e69f9
+- [x] 1.4 Named save and blank-name (Anonymous) save both work correctly — 38e69f9
+- [x] 1.5 Intermediate round-complete modal shows no name input and does not save — 38e69f9
+- [x] 1.6 Action button saves and restarts a fresh round 1 after victory/game-over — 38e69f9
 
 ### Phase 2: High-score highlight on save
 
 #### Automated
 
-- [ ] 2.1 npm run test passes (full existing suite, no regressions)
-- [ ] 2.2 npm run astro -- check reports no new type errors
+- [x] 2.1 npm run test passes (full existing suite, no regressions)
+- [x] 2.2 npm run astro -- check reports no new type errors
 
 #### Manual
 
-- [ ] 2.3 Newly saved entry visibly flashes once in the TOP SCORES list
-- [ ] 2.4 Only the most recently saved entry highlights, not prior ones
-- [ ] 2.5 Initial page load shows no highlighted rows
+- [x] 2.3 Newly saved entry visibly flashes once in the TOP SCORES list
+- [x] 2.4 Only the most recently saved entry highlights, not prior ones
+- [x] 2.5 Initial page load shows no highlighted rows
