@@ -323,6 +323,21 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		background: rgba(17, 22, 32, 0.9);
 	}
 
+	@media (max-width: 560px) {
+		.game-top-bar {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.active-game-heading {
+			font-size: 1rem;
+		}
+
+		.catalogue-heading {
+			font-size: 0.9rem;
+		}
+	}
+
 	/* Scores Panel */
 	.retro-footer {
 		display: flex;

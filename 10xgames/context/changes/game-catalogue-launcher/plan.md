@@ -223,8 +223,8 @@ Complete the final polish pass for the launcher—layout spacing, focus states, 
 
 #### Automated
 
-- [x] 2.1 `npm run astro -- check` passes
-- [x] 2.2 `npm run build` completes successfully
+- [x] 2.1 `npm run astro -- check` passes — 90ab160
+- [x] 2.2 `npm run build` completes successfully — 90ab160
 
 #### Manual
 
