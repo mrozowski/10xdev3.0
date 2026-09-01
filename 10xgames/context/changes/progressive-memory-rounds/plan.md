@@ -292,15 +292,15 @@ No new network requests or assets beyond inline SVG (consistent with the existin
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npm run test`
-- [x] 1.2 Type checking passes: `npm run astro -- check`
+- [x] 1.1 Unit tests pass: `npm run test` — 7682b09
+- [x] 1.2 Type checking passes: `npm run astro -- check` — 7682b09
 
 ### Phase 2: Theme symbol pool expansion
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm run test`
-- [ ] 2.2 Type checking passes: `npm run astro -- check`
+- [x] 2.1 Unit tests pass: `npm run test`
+- [x] 2.2 Type checking passes: `npm run astro -- check`
 
 #### Manual
 
