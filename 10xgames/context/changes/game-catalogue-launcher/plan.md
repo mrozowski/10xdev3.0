@@ -216,8 +216,8 @@ Complete the final polish pass for the launcher—layout spacing, focus states, 
 
 #### Manual
 
-- [ ] 1.3 Player can open the site and see the catalogue view
-- [ ] 1.4 Clicking Memory Cards opens the game and return flow works
+- [x] 1.3 Player can open the site and see the catalogue view — 8debb2c
+- [x] 1.4 Clicking Memory Cards opens the game and return flow works — 8debb2c
 
 ### Phase 2: Per-game top-score summary contract
 
@@ -228,17 +228,17 @@ Complete the final polish pass for the launcher—layout spacing, focus states, 
 
 #### Manual
 
-- [ ] 2.3 Memory Cards tile shows a valid score summary after a complete round
-- [ ] 2.4 game score flow remains unchanged by the launcher
+- [x] 2.3 Memory Cards tile shows a valid score summary after a complete round — 90ab160
+- [x] 2.4 game score flow remains unchanged by the launcher — 90ab160
 
 ### Phase 3: Responsive catalogue polish and final verification
 
 #### Automated
 
-- [ ] 3.1 `npm run astro -- check` passes
-- [ ] 3.2 `npm run build` completes successfully
+- [x] 3.1 `npm run astro -- check` passes — 645d0d9
+- [x] 3.2 `npm run build` completes successfully — 645d0d9
 
 #### Manual
 
-- [ ] 3.3 catalogue and return flow remain usable on a phone-sized viewport
-- [ ] 3.4 no regressions in the existing Memory Cards game flow
+- [x] 3.3 catalogue and return flow remain usable on a phone-sized viewport — 645d0d9
+- [x] 3.4 no regressions in the existing Memory Cards game flow — 645d0d9
