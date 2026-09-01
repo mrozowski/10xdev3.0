@@ -12,6 +12,11 @@ const preferences = getPreferences();
 			<span id="hud-score" class="hud-value neon-cyan">0</span>
 		</div>
 
+		<div class="hud-item round-box">
+			<span class="hud-label">ROUND</span>
+			<span id="hud-round" class="hud-value neon-green">1/1</span>
+		</div>
+
 		<div class="hud-item combo-box">
 			<span class="hud-label">COMBO</span>
 			<span id="hud-combo" class="hud-value neon-pink">x1</span>
@@ -76,13 +81,14 @@ const preferences = getPreferences();
 
 <script>
 	import {
-		createInitialGameState,
 		tickPreview,
 		tickTimer,
 		flipCard,
 		resolveMismatch,
+		startRound,
 		PREVIEW_SECONDS,
 		TIME_BONUS_PER_SECOND,
+		TOTAL_ROUNDS,
 		type GameState,
 	} from '../../lib/memory-game/engine';
 	import { getThemeSymbols, type ThemeSymbol } from '../../lib/memory-game/themes';
@@ -91,11 +97,13 @@ const preferences = getPreferences();
 	import { addScore } from '../../lib/scores';
 
 	const MISMATCH_COOLDOWN_MS = 800;
+	const RESIZE_DEBOUNCE_MS = 150;
 
 	class MemoryGameIsland {
 		private root: HTMLElement;
 		private gridEl: HTMLElement;
 		private hudScore: HTMLElement;
+		private hudRound: HTMLElement;
 		private hudCombo: HTMLElement;
 		private hudTimer: HTMLElement;
 		private previewBanner: HTMLElement;
@@ -115,12 +123,17 @@ const preferences = getPreferences();
 		private previewInterval: number | null = null;
 		private roundInterval: number | null = null;
 		private mismatchTimeout: number | null = null;
+		private resizeTimeout: number | null = null;
 		private symbolsMap: Map<string, ThemeSymbol> = new Map();
+		private symbolIds: string[] = [];
+		/** Determines what the modal's single action button does when clicked. */
+		private nextAction: 'advance' | 'restart' = 'restart';
 
 		constructor(root: HTMLElement) {
 			this.root = root;
 			this.gridEl = root.querySelector('#cards-grid') as HTMLElement;
 			this.hudScore = root.querySelector('#hud-score') as HTMLElement;
+			this.hudRound = root.querySelector('#hud-round') as HTMLElement;
 			this.hudCombo = root.querySelector('#hud-combo') as HTMLElement;
 			this.hudTimer = root.querySelector('#hud-timer') as HTMLElement;
 			this.previewBanner = root.querySelector('#preview-banner') as HTMLElement;
@@ -155,11 +168,18 @@ const preferences = getPreferences();
 				initAudioContext();
 				playSound('tick');
 				this.modal.classList.add('hidden');
-				this.startNewGame();
+				if (this.nextAction === 'advance') {
+					this.advanceToNextRound();
+				} else {
+					this.startNewGame();
+				}
 			});
 
 			// Unlock the browser AudioContext on the first user gesture.
 			this.root.addEventListener('pointerdown', () => initAudioContext(), { once: true });
+
+			window.addEventListener('resize', () => this.scheduleColumnRecompute());
+			window.addEventListener('orientationchange', () => this.scheduleColumnRecompute());
 		}
 
 		private updateSoundIcon(enabled: boolean): void {
@@ -168,21 +188,34 @@ const preferences = getPreferences();
 		}
 
 		public startNewGame(): void {
-			this.clearTimers();
-
 			const currentPrefs = getPreferences();
 			const symbols = getThemeSymbols(currentPrefs.theme);
 			this.symbolsMap = new Map(symbols.map((symbol) => [symbol.id, symbol]));
+			this.symbolIds = symbols.map((symbol) => symbol.id);
 			this.updateSoundIcon(currentPrefs.soundEnabled);
 
-			this.state = createInitialGameState(
-				symbols.map((symbol) => symbol.id),
-				8,
-			);
+			this.beginRound(startRound(1, this.symbolIds, 0));
+		}
+
+		private advanceToNextRound(): void {
+			this.beginRound(startRound(this.state.round + 1, this.symbolIds, this.state.score));
+		}
+
+		private beginRound(state: GameState): void {
+			this.clearTimers();
+			this.state = state;
 
 			this.renderGrid();
 			this.updateHUD();
+			this.recomputeColumns();
 			this.hudTimer.classList.remove('pulse-danger');
+
+			if (this.state.status !== 'preview') {
+				// Round 2+ starts directly in 'playing' with cards face down (skipPreview).
+				this.previewBanner.classList.add('hidden');
+				this.startRoundTimer();
+				return;
+			}
 
 			this.previewBanner.classList.remove('hidden');
 			this.previewCountdown.textContent = String(PREVIEW_SECONDS);
@@ -219,6 +252,9 @@ const preferences = getPreferences();
 					this.clearTimers();
 					this.syncCards();
 					playSound('gameover');
+					addScore({ score: this.state.score, roundsCompleted: this.state.round - 1 });
+					window.dispatchEvent(new Event('memory-game:scores-updated'));
+					this.nextAction = 'restart';
 					this.showGameOverModal();
 					return;
 				}
@@ -228,6 +264,40 @@ const preferences = getPreferences();
 					playSound('tick');
 				}
 			}, 1000);
+		}
+
+		private computeColumns(totalPairs: number): number {
+			if (window.matchMedia('(max-width: 480px)').matches) {
+				return 4;
+			}
+			if (totalPairs <= 8) {
+				return 4;
+			}
+			if (totalPairs <= 10) {
+				return 5;
+			}
+			if (totalPairs <= 12) {
+				return 6;
+			}
+			if (totalPairs <= 14) {
+				return 7;
+			}
+			return 8;
+		}
+
+		private recomputeColumns(): void {
+			const cols = this.computeColumns(this.state.totalPairs);
+			this.gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+		}
+
+		private scheduleColumnRecompute(): void {
+			if (this.resizeTimeout !== null) {
+				clearTimeout(this.resizeTimeout);
+			}
+			this.resizeTimeout = window.setTimeout(() => {
+				this.resizeTimeout = null;
+				this.recomputeColumns();
+			}, RESIZE_DEBOUNCE_MS);
 		}
 
 		private clearTimers(): void {
@@ -297,9 +367,17 @@ const preferences = getPreferences();
 				case 'completed':
 					this.clearTimers();
 					playSound('victory');
-					addScore({ score: this.state.score });
+					addScore({ score: this.state.score, roundsCompleted: this.state.roundsTotal });
 					window.dispatchEvent(new Event('memory-game:scores-updated'));
+					this.nextAction = 'restart';
 					this.showVictoryModal();
+					break;
+
+				case 'round_complete':
+					this.clearTimers();
+					playSound('victory');
+					this.nextAction = 'advance';
+					this.showRoundCompleteModal();
 					break;
 
 				case 'mismatch':
@@ -332,6 +410,7 @@ const preferences = getPreferences();
 
 		private updateHUD(): void {
 			this.hudScore.textContent = String(this.state.score);
+			this.hudRound.textContent = `${this.state.round}/${this.state.roundsTotal}`;
 			this.hudCombo.textContent = `x${Math.max(1, this.state.combo)}`;
 			this.hudTimer.textContent = `${this.state.roundSecondsRemaining}s`;
 		}
@@ -339,12 +418,28 @@ const preferences = getPreferences();
 		private showVictoryModal(): void {
 			this.modalTitle.textContent = 'VICTORY!';
 			this.modalTitle.className = 'modal-title neon-green';
-			this.modalMessage.textContent = `All ${this.state.totalPairs} pairs matched in time!`;
+			this.modalMessage.textContent = `All ${TOTAL_ROUNDS} rounds complete!`;
 			this.modalFinalScore.textContent = String(this.state.score);
 			this.modalTimeBonus.textContent = `+${
 				this.state.roundSecondsRemaining * TIME_BONUS_PER_SECOND
 			} pts`;
 			this.timeBonusRow.classList.remove('hidden');
+			this.btnPlayAgain.textContent = 'PLAY AGAIN';
+			this.modal.classList.remove('hidden');
+		}
+
+		private showRoundCompleteModal(): void {
+			this.modalTitle.textContent = `ROUND ${this.state.round} COMPLETE!`;
+			this.modalTitle.className = 'modal-title neon-green';
+			this.modalMessage.textContent = `All ${this.state.totalPairs} pairs matched! Get ready for round ${
+				this.state.round + 1
+			}.`;
+			this.modalFinalScore.textContent = String(this.state.score);
+			this.modalTimeBonus.textContent = `+${
+				this.state.roundSecondsRemaining * TIME_BONUS_PER_SECOND
+			} pts`;
+			this.timeBonusRow.classList.remove('hidden');
+			this.btnPlayAgain.textContent = 'NEXT ROUND';
 			this.modal.classList.remove('hidden');
 		}
 
@@ -354,6 +449,7 @@ const preferences = getPreferences();
 			this.modalMessage.textContent = 'The timer ran out before all pairs were found.';
 			this.modalFinalScore.textContent = String(this.state.score);
 			this.timeBonusRow.classList.add('hidden');
+			this.btnPlayAgain.textContent = 'PLAY AGAIN';
 			this.modal.classList.remove('hidden');
 		}
 	}
@@ -372,7 +468,7 @@ const preferences = getPreferences();
 <style is:global>
 	#memory-game-root {
 		width: 100%;
-		max-width: 520px;
+		max-width: 640px;
 		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
@@ -388,7 +484,7 @@ const preferences = getPreferences();
 	/* HUD */
 	#memory-game-root .game-hud {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr) auto;
+		grid-template-columns: repeat(4, 1fr) auto;
 		gap: 0.5rem;
 		align-items: center;
 		background: #111620;

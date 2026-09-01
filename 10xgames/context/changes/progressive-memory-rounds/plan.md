@@ -304,28 +304,28 @@ No new network requests or assets beyond inline SVG (consistent with the existin
 
 #### Manual
 
-- [ ] 2.3 Each new symbol renders as recognizable, distinct artwork at mobile card size
+- [x] 2.3 Each new symbol renders as recognizable, distinct artwork at mobile card size
 
 ### Phase 3: Score contract round tracking
 
 #### Automated
 
-- [x] 3.1 Unit tests pass: `npm run test`
-- [x] 3.2 Type checking passes: `npm run astro -- check`
+- [x] 3.1 Unit tests pass: `npm run test` — 5222b32
+- [x] 3.2 Type checking passes: `npm run astro -- check` — 5222b32
 
 ### Phase 4: Game UI integration
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run astro -- check`
-- [ ] 4.2 Production build succeeds: `npm run build`
+- [x] 4.1 Type checking passes: `npm run astro -- check`
+- [x] 4.2 Production build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 4.3 Round 1 shows the 3-second preview; rounds 2-5 skip it and start face-down immediately
-- [ ] 4.4 Round indicator ("ROUND N/5") updates correctly through a full 5-round playthrough
-- [ ] 4.5 Score visibly carries over between rounds (not reset to 0)
-- [ ] 4.6 Completing round 5 shows a victory modal and saves exactly one score entry with `roundsCompleted: 5`
-- [ ] 4.7 Letting the timer run out mid-progression (e.g. round 3) ends the session immediately and saves one score entry with `roundsCompleted: 2`
-- [ ] 4.8 Card grid remains playable at 16, 20, 24, 28, and 32 cards on phone, tablet, and desktop widths
-- [ ] 4.9 Rotating a phone mid-round adapts the column layout without breaking game state
+- [x] 4.3 Round 1 shows the 3-second preview; rounds 2-5 skip it and start face-down immediately
+- [x] 4.4 Round indicator ("ROUND N/5") updates correctly through a full 5-round playthrough
+- [x] 4.5 Score visibly carries over between rounds (not reset to 0)
+- [x] 4.6 Completing round 5 shows a victory modal and saves exactly one score entry with `roundsCompleted: 5`
+- [x] 4.7 Letting the timer run out mid-progression (e.g. round 3) ends the session immediately and saves one score entry with `roundsCompleted: 2`
+- [x] 4.8 Card grid remains playable at 16, 20, 24, 28, and 32 cards on phone, tablet, and desktop widths
+- [x] 4.9 Rotating a phone mid-round adapts the column layout without breaking game state
