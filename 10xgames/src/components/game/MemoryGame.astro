@@ -225,6 +225,7 @@ const preferences = getPreferences();
 		private roundInterval: number | null = null;
 		private mismatchTimeout: number | null = null;
 		private resizeTimeout: number | null = null;
+		private gameViewIsActive = false;
 		private gameViewOpenedAt: number | null = null;
 		private sessionStatsRecorded = false;
 		private symbolsMap: Map<string, ThemeSymbol> = new Map();
@@ -330,11 +331,12 @@ const preferences = getPreferences();
 				if (this.gameViewOpenedAt !== null) {
 					this.gameViewOpenedAt = Date.now();
 				}
+				window.dispatchEvent(new CustomEvent('memory-game:stats-cleared'));
 				this.renderStats();
 			});
 
 			window.addEventListener('memory-game:view-opened', () => this.handleGameViewOpened());
-			window.addEventListener('memory-game:view-closed', () => this.flushGameViewTime());
+			window.addEventListener('memory-game:view-closed', () => this.handleGameViewClosed());
 			window.addEventListener('pagehide', () => this.flushGameViewTime());
 			window.addEventListener('beforeunload', () => this.flushGameViewTime());
 			window.addEventListener('resize', () => this.scheduleColumnRecompute());
@@ -347,13 +349,22 @@ const preferences = getPreferences();
 		}
 
 		private handleGameViewOpened(): void {
-			if (this.gameViewOpenedAt !== null) {
+			if (this.gameViewIsActive) {
 				return;
 			}
 
+			this.gameViewIsActive = true;
 			this.gameViewOpenedAt = Date.now();
 			recordGameOpened(MEMORY_GAME_ID);
+			this.startNewGame();
 			this.renderStats();
+		}
+
+		private handleGameViewClosed(): void {
+			this.flushGameViewTime();
+			this.gameViewOpenedAt = null;
+			this.gameViewIsActive = false;
+			this.clearTimers();
 		}
 
 		private flushGameViewTime(): void {
@@ -401,6 +412,10 @@ const preferences = getPreferences();
 			this.updateHUD();
 			this.recomputeColumns();
 			this.hudTimer.classList.remove('pulse-danger');
+
+			if (!this.gameViewIsActive) {
+				return;
+			}
 
 			if (this.state.status !== 'preview') {
 				// Round 2+ starts directly in 'playing' with cards face down (skipPreview).
@@ -538,7 +553,7 @@ const preferences = getPreferences();
 		}
 
 		private handleCardClick(index: number): void {
-			if (this.state.status !== 'playing') {
+			if (!this.gameViewIsActive || this.state.status !== 'playing') {
 				return;
 			}
 

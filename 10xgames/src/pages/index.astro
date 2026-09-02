@@ -77,6 +77,9 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 
 	window.addEventListener('pagehide', flushPlatformTime);
 	window.addEventListener('beforeunload', flushPlatformTime);
+	window.addEventListener('memory-game:stats-cleared', () => {
+		lastPlatformFlush = Date.now();
+	});
 
 	launchButton?.addEventListener('click', () => setView('game'));
 	backButton?.addEventListener('click', () => setView('catalogue'));
