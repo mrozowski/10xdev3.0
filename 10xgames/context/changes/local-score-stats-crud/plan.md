@@ -474,31 +474,31 @@ should still fail safely for malformed old data.
 
 #### Automated
 
-- [x] 1.1 `npx vitest run src/lib/scores.test.ts src/lib/stats.test.ts` passes
-- [x] 1.2 `npm run test` passes
-- [x] 1.3 `npm run typecheck` passes
+- [x] 1.1 `npx vitest run src/lib/scores.test.ts src/lib/stats.test.ts` passes — 57cfee3
+- [x] 1.2 `npm run test` passes — 57cfee3
+- [x] 1.3 `npm run typecheck` passes — 57cfee3
 
 #### Manual
 
-- [x] 1.4 Existing local dev scores can be cleared or ignored without production migration concerns
+- [x] 1.4 Existing local dev scores can be cleared or ignored without production migration concerns — 57cfee3
 
 ### Phase 2: In-Game Score and Stats Management UI
 
 #### Automated
 
-- [ ] 2.1 `npm run typecheck` passes
-- [ ] 2.2 `npm run test` passes
-- [ ] 2.3 `npm run build` passes
+- [x] 2.1 `npm run typecheck` passes
+- [x] 2.2 `npm run test` passes
+- [x] 2.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 2.4 The catalogue shows Memory Cards without a score/top-score summary
-- [ ] 2.5 Memory Cards shows its own score table and stats panel below the game board
-- [ ] 2.6 A saved score can be renamed inline; only the label changes
-- [ ] 2.7 A single score can be deleted without deleting neighboring scores
-- [ ] 2.8 Current-game scores can be cleared without clearing stats
-- [ ] 2.9 Stats can be cleared without clearing scores
-- [ ] 2.10 Browser-profile copy is visible and does not imply account-level privacy
+- [x] 2.4 The catalogue shows Memory Cards without a score/top-score summary
+- [x] 2.5 Memory Cards shows its own score table and stats panel below the game board
+- [x] 2.6 A saved score can be renamed inline; only the label changes
+- [x] 2.7 A single score can be deleted without deleting neighboring scores
+- [x] 2.8 Current-game scores can be cleared without clearing stats
+- [x] 2.9 Stats can be cleared without clearing scores
+- [x] 2.10 Browser-profile copy is visible and does not imply account-level privacy
 
 ### Phase 3: Browser Flow Verification and Roadmap Handoff
 

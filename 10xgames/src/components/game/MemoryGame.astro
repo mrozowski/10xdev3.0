@@ -49,6 +49,67 @@ const preferences = getPreferences();
 		<!-- 16 Cards are rendered and bound by the client script -->
 	</main>
 
+	<section class="local-data-panel" aria-labelledby="memory-local-data-heading">
+		<div class="local-data-copy">
+			<h2 id="memory-local-data-heading" class="local-data-heading">LOCAL GAME DATA</h2>
+			<p>
+				Scores and stats are stored only in this browser profile. Everyone using this profile
+				can view, rename, or clear them.
+			</p>
+		</div>
+
+		<div class="local-data-grid">
+			<section class="score-management-panel" aria-labelledby="memory-scores-heading">
+				<div class="panel-header">
+					<h3 id="memory-scores-heading" class="panel-heading">SCORES</h3>
+					<button id="btn-clear-scores" class="retro-btn danger-btn" type="button">
+						CLEAR SCORES
+					</button>
+				</div>
+				<ul id="memory-score-list" class="managed-score-list" aria-live="polite"></ul>
+			</section>
+
+			<section class="stats-panel" aria-labelledby="memory-stats-heading">
+				<div class="panel-header">
+					<h3 id="memory-stats-heading" class="panel-heading">LOCAL STATS</h3>
+					<button id="btn-clear-stats" class="retro-btn danger-btn" type="button">
+						CLEAR STATS
+					</button>
+				</div>
+				<dl class="stats-list">
+					<div class="stat-row">
+						<dt>Platform time</dt>
+						<dd id="stat-platform-time">0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Memory Cards time</dt>
+						<dd id="stat-game-time">0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Games played</dt>
+						<dd id="stat-games-played">0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Total points</dt>
+						<dd id="stat-total-points">0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Average points</dt>
+						<dd id="stat-average-points">0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Average game time</dt>
+						<dd id="stat-average-time">0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Last played</dt>
+						<dd id="stat-last-played">Never</dd>
+					</div>
+				</dl>
+			</section>
+		</div>
+	</section>
+
 	<!-- Game Over / Victory Modal Overlay -->
 	<div id="game-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
 		<div class="modal-card">
@@ -106,8 +167,24 @@ const preferences = getPreferences();
 	import { getThemeSymbols, type ThemeSymbol } from '../../lib/memory-game/themes';
 	import { playSound, initAudioContext } from '../../lib/sound';
 	import { getPreferences, setSoundEnabled } from '../../lib/preferences';
-	import { addScore, getScoresForGame } from '../../lib/scores';
+	import {
+		addScore,
+		clearScoresForGame,
+		deleteScore,
+		getScoresForGame,
+		renameScore,
+		type ScoreEntry,
+	} from '../../lib/scores';
+	import {
+		clearStats,
+		getGameStatsSummary,
+		getStats,
+		recordCompletedGame,
+		recordGameOpened,
+		recordGameTime,
+	} from '../../lib/stats';
 
+	const MEMORY_GAME_ID = 'memory-cards';
 	const MISMATCH_COOLDOWN_MS = 800;
 	const RESIZE_DEBOUNCE_MS = 150;
 
@@ -132,12 +209,24 @@ const preferences = getPreferences();
 		private btnPlayAgain: HTMLButtonElement;
 		private nameEntryRow: HTMLElement;
 		private scoreNameInput: HTMLInputElement;
+		private scoreList: HTMLElement;
+		private clearScoresButton: HTMLButtonElement;
+		private clearStatsButton: HTMLButtonElement;
+		private statPlatformTime: HTMLElement;
+		private statGameTime: HTMLElement;
+		private statGamesPlayed: HTMLElement;
+		private statTotalPoints: HTMLElement;
+		private statAveragePoints: HTMLElement;
+		private statAverageTime: HTMLElement;
+		private statLastPlayed: HTMLElement;
 
 		private state!: GameState;
 		private previewInterval: number | null = null;
 		private roundInterval: number | null = null;
 		private mismatchTimeout: number | null = null;
 		private resizeTimeout: number | null = null;
+		private gameViewOpenedAt: number | null = null;
+		private sessionStatsRecorded = false;
 		private symbolsMap: Map<string, ThemeSymbol> = new Map();
 		private symbolIds: string[] = [];
 		/** Determines what the modal's single action button does when clicked. */
@@ -166,9 +255,21 @@ const preferences = getPreferences();
 			this.btnPlayAgain = root.querySelector('#btn-play-again') as HTMLButtonElement;
 			this.nameEntryRow = root.querySelector('#name-entry-row') as HTMLElement;
 			this.scoreNameInput = root.querySelector('#score-name-input') as HTMLInputElement;
+			this.scoreList = root.querySelector('#memory-score-list') as HTMLElement;
+			this.clearScoresButton = root.querySelector('#btn-clear-scores') as HTMLButtonElement;
+			this.clearStatsButton = root.querySelector('#btn-clear-stats') as HTMLButtonElement;
+			this.statPlatformTime = root.querySelector('#stat-platform-time') as HTMLElement;
+			this.statGameTime = root.querySelector('#stat-game-time') as HTMLElement;
+			this.statGamesPlayed = root.querySelector('#stat-games-played') as HTMLElement;
+			this.statTotalPoints = root.querySelector('#stat-total-points') as HTMLElement;
+			this.statAveragePoints = root.querySelector('#stat-average-points') as HTMLElement;
+			this.statAverageTime = root.querySelector('#stat-average-time') as HTMLElement;
+			this.statLastPlayed = root.querySelector('#stat-last-played') as HTMLElement;
 
 			this.bindEvents();
 			this.startNewGame();
+			this.renderScores();
+			this.renderStats();
 		}
 
 		private bindEvents(): void {
@@ -188,28 +289,16 @@ const preferences = getPreferences();
 
 				if (this.nextAction === 'restart' && this.pendingScore) {
 					const name = this.scoreNameInput.value.trim();
-					const previousLatestDate = getScoresForGame('memory-cards').reduce<string | null>(
-						(latest, entry) => (latest === null || entry.date > latest ? entry.date : latest),
-						null,
-					);
+					const existingIds = new Set(getScoresForGame(MEMORY_GAME_ID).map(({ id }) => id));
 					const savedScores = addScore({
-						gameId: 'memory-cards',
+						gameId: MEMORY_GAME_ID,
 						name,
 						score: this.pendingScore.score,
 						roundsCompleted: this.pendingScore.roundsCompleted,
 					});
 					this.pendingScore = null;
-					const latestDate = savedScores.reduce<string | null>(
-						(latest, entry) => (latest === null || entry.date > latest ? entry.date : latest),
-						null,
-					);
-					// Only the just-saved entry can move the "latest date" forward; if it didn't
-					// change, the new score was truncated out of the top-10 list — don't highlight
-					// a stale, unrelated entry.
-					const newEntryDate = latestDate !== previousLatestDate ? latestDate : undefined;
-					window.dispatchEvent(
-						new CustomEvent('memory-game:scores-updated', { detail: { newEntryDate } }),
-					);
+					const newEntryId = savedScores.find(({ id }) => !existingIds.has(id))?.id;
+					this.renderScores(newEntryId);
 				}
 
 				this.modal.classList.add('hidden');
@@ -223,6 +312,31 @@ const preferences = getPreferences();
 			// Unlock the browser AudioContext on the first user gesture.
 			this.root.addEventListener('pointerdown', () => initAudioContext(), { once: true });
 
+			this.clearScoresButton.addEventListener('click', () => {
+				if (!window.confirm('Clear all Memory Cards scores stored in this browser profile?')) {
+					return;
+				}
+
+				clearScoresForGame(MEMORY_GAME_ID);
+				this.renderScores();
+			});
+
+			this.clearStatsButton.addEventListener('click', () => {
+				if (!window.confirm('Clear local stats stored in this browser profile?')) {
+					return;
+				}
+
+				clearStats();
+				if (this.gameViewOpenedAt !== null) {
+					this.gameViewOpenedAt = Date.now();
+				}
+				this.renderStats();
+			});
+
+			window.addEventListener('memory-game:view-opened', () => this.handleGameViewOpened());
+			window.addEventListener('memory-game:view-closed', () => this.flushGameViewTime());
+			window.addEventListener('pagehide', () => this.flushGameViewTime());
+			window.addEventListener('beforeunload', () => this.flushGameViewTime());
 			window.addEventListener('resize', () => this.scheduleColumnRecompute());
 			window.addEventListener('orientationchange', () => this.scheduleColumnRecompute());
 		}
@@ -232,12 +346,45 @@ const preferences = getPreferences();
 			this.soundToggleBtn.classList.toggle('muted', !enabled);
 		}
 
+		private handleGameViewOpened(): void {
+			if (this.gameViewOpenedAt !== null) {
+				return;
+			}
+
+			this.gameViewOpenedAt = Date.now();
+			recordGameOpened(MEMORY_GAME_ID);
+			this.renderStats();
+		}
+
+		private flushGameViewTime(): void {
+			if (this.gameViewOpenedAt === null) {
+				return;
+			}
+
+			const now = Date.now();
+			recordGameTime(MEMORY_GAME_ID, now - this.gameViewOpenedAt);
+			this.gameViewOpenedAt = now;
+			this.renderStats();
+		}
+
+		private recordSessionCompletion(): void {
+			if (this.sessionStatsRecorded) {
+				return;
+			}
+
+			this.flushGameViewTime();
+			recordCompletedGame(MEMORY_GAME_ID, this.state.score);
+			this.sessionStatsRecorded = true;
+			this.renderStats();
+		}
+
 		public startNewGame(): void {
 			const currentPrefs = getPreferences();
 			const symbols = getThemeSymbols(currentPrefs.theme);
 			this.symbolsMap = new Map(symbols.map((symbol) => [symbol.id, symbol]));
 			this.symbolIds = symbols.map((symbol) => symbol.id);
 			this.updateSoundIcon(currentPrefs.soundEnabled);
+			this.sessionStatsRecorded = false;
 
 			this.beginRound(startRound(1, this.symbolIds, 0));
 		}
@@ -298,6 +445,7 @@ const preferences = getPreferences();
 					this.syncCards();
 					playSound('gameover');
 					this.pendingScore = { score: this.state.score, roundsCompleted: this.state.round - 1 };
+					this.recordSessionCompletion();
 					this.nextAction = 'restart';
 					this.showGameOverModal();
 					return;
@@ -416,6 +564,7 @@ const preferences = getPreferences();
 					this.clearTimers();
 					playSound('victory');
 					this.pendingScore = { score: this.state.score, roundsCompleted: this.state.roundsTotal };
+					this.recordSessionCompletion();
 					this.nextAction = 'restart';
 					this.showVictoryModal();
 					break;
@@ -460,6 +609,171 @@ const preferences = getPreferences();
 			this.hudRound.textContent = `${this.state.round}/${this.state.roundsTotal}`;
 			this.hudCombo.textContent = `x${Math.max(1, this.state.combo)}`;
 			this.hudTimer.textContent = `${this.state.roundSecondsRemaining}s`;
+		}
+
+		private renderScores(highlightId?: string): void {
+			this.scoreList.replaceChildren();
+			const scores = getScoresForGame(MEMORY_GAME_ID);
+
+			if (scores.length === 0) {
+				const emptyState = document.createElement('li');
+				emptyState.className = 'managed-score-empty';
+				emptyState.textContent = 'No Memory Cards scores yet.';
+				this.scoreList.appendChild(emptyState);
+				return;
+			}
+
+			scores.forEach((score, index) => {
+				this.scoreList.appendChild(this.createScoreRow(score, index, highlightId));
+			});
+		}
+
+		private createScoreRow(score: ScoreEntry, index: number, highlightId?: string): HTMLLIElement {
+			const row = document.createElement('li');
+			row.className = 'managed-score-row';
+			row.dataset.scoreId = score.id;
+			if (highlightId === score.id) {
+				row.classList.add('newly-saved');
+			}
+
+			const details = document.createElement('div');
+			details.className = 'managed-score-details';
+
+			const primary = document.createElement('div');
+			primary.className = 'managed-score-primary';
+
+			const rank = document.createElement('span');
+			rank.className = 'managed-score-rank';
+			rank.textContent = `#${index + 1}`;
+
+			const name = document.createElement('span');
+			name.className = 'managed-score-name';
+			name.textContent = score.name;
+
+			const points = document.createElement('span');
+			points.className = 'managed-score-points';
+			points.textContent = `${score.score} pts`;
+
+			primary.append(rank, name, points);
+
+			const meta = document.createElement('div');
+			meta.className = 'managed-score-meta';
+			meta.textContent = `Completed: ${score.roundsCompleted ?? 0} • ${this.formatDate(score.date)}`;
+
+			details.append(primary, meta);
+
+			const actions = document.createElement('div');
+			actions.className = 'managed-score-actions';
+
+			const renameButton = document.createElement('button');
+			renameButton.className = 'retro-btn compact-btn';
+			renameButton.type = 'button';
+			renameButton.textContent = 'RENAME';
+			renameButton.setAttribute('aria-label', `Rename score for ${score.name}`);
+			renameButton.addEventListener('click', () => this.renderRenameScoreRow(score));
+
+			const deleteButton = document.createElement('button');
+			deleteButton.className = 'retro-btn compact-btn danger-btn';
+			deleteButton.type = 'button';
+			deleteButton.textContent = 'DELETE';
+			deleteButton.setAttribute('aria-label', `Delete score for ${score.name}`);
+			deleteButton.addEventListener('click', () => {
+				if (!window.confirm(`Delete ${score.name}'s Memory Cards score?`)) {
+					return;
+				}
+
+				deleteScore(MEMORY_GAME_ID, score.id);
+				this.renderScores();
+			});
+
+			actions.append(renameButton, deleteButton);
+			row.append(details, actions);
+			return row;
+		}
+
+		private renderRenameScoreRow(score: ScoreEntry): void {
+			const rows = Array.from(this.scoreList.querySelectorAll<HTMLLIElement>('.managed-score-row'));
+			const row = rows.find((candidate) => candidate.dataset.scoreId === score.id);
+
+			if (!row) {
+				return;
+			}
+
+			row.replaceChildren();
+			row.classList.add('editing');
+
+			const label = document.createElement('label');
+			label.className = 'managed-score-edit-label';
+			label.textContent = 'Score label';
+
+			const input = document.createElement('input');
+			input.className = 'managed-score-input';
+			input.type = 'text';
+			input.maxLength = 24;
+			input.value = score.name;
+			input.setAttribute('aria-label', `New name for ${score.name}`);
+
+			const actions = document.createElement('div');
+			actions.className = 'managed-score-actions';
+
+			const saveButton = document.createElement('button');
+			saveButton.className = 'retro-btn compact-btn';
+			saveButton.type = 'button';
+			saveButton.textContent = 'SAVE';
+			saveButton.addEventListener('click', () => {
+				renameScore(MEMORY_GAME_ID, score.id, input.value);
+				this.renderScores(score.id);
+			});
+
+			const cancelButton = document.createElement('button');
+			cancelButton.className = 'retro-btn compact-btn secondary-action-btn';
+			cancelButton.type = 'button';
+			cancelButton.textContent = 'CANCEL';
+			cancelButton.addEventListener('click', () => this.renderScores());
+
+			actions.append(saveButton, cancelButton);
+			row.append(label, input, actions);
+			input.focus();
+			input.select();
+		}
+
+		private renderStats(): void {
+			const stats = getStats();
+			const gameStats = getGameStatsSummary(MEMORY_GAME_ID);
+
+			this.statPlatformTime.textContent = this.formatDuration(stats.totalPlatformTimeMs);
+			this.statGameTime.textContent = this.formatDuration(gameStats.totalPlayTimeMs);
+			this.statGamesPlayed.textContent = String(gameStats.gamesPlayed);
+			this.statTotalPoints.textContent = String(gameStats.totalPoints);
+			this.statAveragePoints.textContent = String(Math.round(gameStats.averagePoints));
+			this.statAverageTime.textContent = this.formatDuration(gameStats.averagePlayTimeMs);
+			this.statLastPlayed.textContent =
+				gameStats.lastPlayedAt === null ? 'Never' : this.formatDate(gameStats.lastPlayedAt);
+		}
+
+		private formatDuration(durationMs: number): string {
+			const seconds = Math.floor(durationMs / 1000);
+			if (seconds < 60) {
+				return `${seconds}s`;
+			}
+
+			const minutes = Math.floor(seconds / 60);
+			const remainingSeconds = seconds % 60;
+			return `${minutes}m ${remainingSeconds}s`;
+		}
+
+		private formatDate(date: string): string {
+			const parsed = new Date(date);
+			if (Number.isNaN(parsed.getTime())) {
+				return 'Unknown date';
+			}
+
+			return parsed.toLocaleDateString(undefined, {
+				month: 'short',
+				day: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit',
+			});
 		}
 
 		private showVictoryModal(): void {
@@ -855,6 +1169,230 @@ const preferences = getPreferences();
 		color: #cbd5e1;
 	}
 
+	#memory-game-root .local-data-panel {
+		background: #111620;
+		border: 2px solid #232d3d;
+		border-radius: 10px;
+		padding: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+	}
+
+	#memory-game-root .local-data-copy {
+		font-family: ui-monospace, monospace;
+		color: #94a3b8;
+		font-size: 0.78rem;
+		line-height: 1.5;
+	}
+
+	#memory-game-root .local-data-copy p {
+		margin: 0.35rem 0 0 0;
+	}
+
+	#memory-game-root .local-data-heading,
+	#memory-game-root .panel-heading {
+		font-family: ui-monospace, monospace;
+		font-weight: 800;
+		letter-spacing: 0.06em;
+		margin: 0;
+	}
+
+	#memory-game-root .local-data-heading {
+		color: #ffe600;
+		font-size: 0.9rem;
+	}
+
+	#memory-game-root .panel-heading {
+		color: #00ff9f;
+		font-size: 0.8rem;
+	}
+
+	#memory-game-root .local-data-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+
+	#memory-game-root .score-management-panel,
+	#memory-game-root .stats-panel {
+		background: #0b0f16;
+		border: 1px solid #1c2736;
+		border-radius: 8px;
+		padding: 0.85rem;
+	}
+
+	#memory-game-root .panel-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+
+	#memory-game-root .managed-score-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	#memory-game-root .managed-score-row,
+	#memory-game-root .managed-score-empty {
+		background: #111620;
+		border: 1px solid #232d3d;
+		border-radius: 6px;
+		padding: 0.6rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	#memory-game-root .managed-score-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	#memory-game-root .managed-score-row.editing {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	#memory-game-root .managed-score-empty {
+		color: #64748b;
+		text-align: center;
+		font-size: 0.8rem;
+	}
+
+	#memory-game-root .managed-score-details {
+		min-width: 0;
+		flex: 1;
+	}
+
+	#memory-game-root .managed-score-primary {
+		display: flex;
+		align-items: baseline;
+		gap: 0.45rem;
+	}
+
+	#memory-game-root .managed-score-rank {
+		color: #7d8b9f;
+		font-weight: 800;
+	}
+
+	#memory-game-root .managed-score-name {
+		color: #d1e4ff;
+		font-weight: 800;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	#memory-game-root .managed-score-points {
+		color: #00f0ff;
+		font-weight: 800;
+		margin-left: auto;
+		white-space: nowrap;
+	}
+
+	#memory-game-root .managed-score-meta {
+		color: #64748b;
+		font-size: 0.72rem;
+		margin-top: 0.25rem;
+	}
+
+	#memory-game-root .managed-score-actions {
+		display: flex;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
+
+	#memory-game-root .compact-btn {
+		font-size: 0.72rem;
+		padding: 0.35rem 0.5rem;
+	}
+
+	#memory-game-root .danger-btn {
+		border-color: #7f1d1d;
+		color: #fecaca;
+	}
+
+	#memory-game-root .danger-btn:hover {
+		border-color: #ff007f;
+		color: #ff007f;
+	}
+
+	#memory-game-root .secondary-action-btn {
+		color: #94a3b8;
+	}
+
+	#memory-game-root .managed-score-edit-label {
+		color: #94a3b8;
+		font-size: 0.75rem;
+	}
+
+	#memory-game-root .managed-score-input {
+		background: #0b0f16;
+		border: 1px solid #232d3d;
+		border-radius: 6px;
+		color: #d1e4ff;
+		font-family: ui-monospace, monospace;
+		padding: 0.55rem 0.65rem;
+	}
+
+	#memory-game-root .managed-score-input:focus {
+		outline: none;
+		border-color: #00f0ff;
+		box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+	}
+
+	#memory-game-root .stats-list {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	#memory-game-root .stats-list .stat-row {
+		border-bottom: 1px solid #1c2736;
+		padding-bottom: 0.35rem;
+	}
+
+	#memory-game-root .stats-list .stat-row:last-child {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
+
+	#memory-game-root .stats-list dt {
+		color: #94a3b8;
+	}
+
+	#memory-game-root .stats-list dd {
+		color: #00f0ff;
+		font-weight: 800;
+		margin: 0;
+	}
+
+	#memory-game-root .managed-score-row.newly-saved {
+		animation: mgScoreEntryFlash 1.6s ease-out;
+	}
+
+	@keyframes mgScoreEntryFlash {
+		0% {
+			background: rgba(0, 255, 159, 0.35);
+			box-shadow: 0 0 12px rgba(0, 255, 159, 0.6);
+		}
+		100% {
+			background: #111620;
+			box-shadow: none;
+		}
+	}
+
 	#memory-game-root .name-entry-row {
 		display: flex;
 		flex-direction: column;
@@ -898,6 +1436,11 @@ const preferences = getPreferences();
 	}
 
 	@media (max-width: 480px) {
+		#memory-game-root .panel-header,
+		#memory-game-root .managed-score-row {
+			align-items: stretch;
+			flex-direction: column;
+		}
 		#memory-game-root .grid-container {
 			gap: 0.4rem;
 		}
@@ -915,7 +1458,8 @@ const preferences = getPreferences();
 			transition: none;
 		}
 		#memory-game-root .card-inner.is-matched,
-		#memory-game-root .pulse-danger {
+		#memory-game-root .pulse-danger,
+		#memory-game-root .managed-score-row.newly-saved {
 			animation: none;
 		}
 	}

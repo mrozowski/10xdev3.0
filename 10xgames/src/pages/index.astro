@@ -24,7 +24,6 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 						<span class="game-card-icon">🧠</span>
 						<span class="game-card-title">MEMORY CARDS</span>
 						<span class="game-card-subtitle">Match every pair before the timer runs out.</span>
-						<span id="memory-cards-score-summary" class="game-card-score">No scores yet</span>
 					</button>
 				</div>
 			</section>
@@ -40,29 +39,28 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 			</section>
 		</main>
 
-		<!-- High Scores & Footer -->
 		<footer class="retro-footer">
-			<section class="scores-panel">
-				<h3 class="scores-heading">TOP SCORES</h3>
-				<ul id="high-scores-list" class="scores-list"></ul>
-			</section>
 			<div class="footer-info">
-				<p>10x Games • Device-local play • Zero ads • Zero tracking</p>
+				<p>10x Games • Browser-profile local data • Zero ads • Zero tracking</p>
 			</div>
 		</footer>
 	</div>
 </Layout>
 
 <script>
-	import { getGameTopScoreSummary } from '../lib/catalog';
-	import { getScoresForGame } from '../lib/scores';
+	import { recordPlatformTime } from '../lib/stats';
 
-	const scoresList = document.getElementById('high-scores-list');
 	const catalogueView = document.getElementById('catalogue-view');
 	const gameView = document.getElementById('game-view');
 	const launchButton = document.querySelector('[data-game-launch="memory-cards"]');
 	const backButton = document.getElementById('btn-back-to-catalogue');
-	const memoryCardScoreSummary = document.getElementById('memory-cards-score-summary');
+	let lastPlatformFlush = Date.now();
+
+	function flushPlatformTime(): void {
+		const now = Date.now();
+		recordPlatformTime(now - lastPlatformFlush);
+		lastPlatformFlush = now;
+	}
 
 	function setView(view: 'catalogue' | 'game'): void {
 		if (!catalogueView || !gameView) {
@@ -72,68 +70,16 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		const isCatalogue = view === 'catalogue';
 		catalogueView.classList.toggle('hidden', !isCatalogue);
 		gameView.classList.toggle('hidden', isCatalogue);
+
+		flushPlatformTime();
+		window.dispatchEvent(new CustomEvent(isCatalogue ? 'memory-game:view-closed' : 'memory-game:view-opened'));
 	}
 
-	function renderCatalogueSummary(): void {
-		if (!memoryCardScoreSummary) {
-			return;
-		}
-
-		const summary = getGameTopScoreSummary('memory-cards');
-		memoryCardScoreSummary.textContent =
-			summary.topScore === null ? 'No scores yet' : `Top score: ${summary.topScore} pts`;
-	}
-
-	function renderHighScores(highlightDate?: string): void {
-		if (!scoresList) {
-			return;
-		}
-
-		scoresList.replaceChildren();
-		const scores = getScoresForGame('memory-cards');
-
-		if (scores.length === 0) {
-			const emptyState = document.createElement('li');
-			emptyState.className = 'empty-scores';
-			emptyState.textContent = 'No scores yet! Complete a round to rank.';
-			scoresList.appendChild(emptyState);
-			return;
-		}
-
-		scores.forEach((entry, index) => {
-			const scoreEntry = document.createElement('li');
-			scoreEntry.className = 'score-entry';
-			if (highlightDate && entry.date === highlightDate) {
-				scoreEntry.classList.add('newly-saved');
-			}
-
-			const rank = document.createElement('span');
-			rank.className = 'score-rank';
-			rank.textContent = `#${index + 1}`;
-
-			const name = document.createElement('span');
-			name.className = 'score-name';
-			name.textContent = entry.name;
-
-			const points = document.createElement('span');
-			points.className = 'score-pts';
-			points.textContent = `${entry.score} pts`;
-
-			scoreEntry.append(rank, name, points);
-			scoresList.appendChild(scoreEntry);
-		});
-	}
+	window.addEventListener('pagehide', flushPlatformTime);
+	window.addEventListener('beforeunload', flushPlatformTime);
 
 	launchButton?.addEventListener('click', () => setView('game'));
 	backButton?.addEventListener('click', () => setView('catalogue'));
-
-	renderCatalogueSummary();
-	renderHighScores();
-	window.addEventListener('memory-game:scores-updated', (event) => {
-		const newEntryDate = (event as CustomEvent<{ newEntryDate?: string }>).detail?.newEntryDate;
-		renderCatalogueSummary();
-		renderHighScores(newEntryDate);
-	});
 </script>
 
 <style>
@@ -275,15 +221,6 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		color: #c2c9d6;
 	}
 
-	.game-card-score {
-		margin-top: auto;
-		font-family: ui-monospace, monospace;
-		font-size: 0.72rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: #00f0ff;
-	}
-
 	.game-top-bar {
 		width: 100%;
 		max-width: 640px;
@@ -342,43 +279,11 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		}
 	}
 
-	/* Scores Panel */
 	.retro-footer {
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
 		margin-top: 1rem;
-	}
-
-	.scores-panel {
-		background: #111620;
-		border: 2px solid #232d3d;
-		border-radius: 8px;
-		padding: 1.2rem;
-		max-width: 640px;
-		margin: 0 auto;
-		width: 100%;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-	}
-
-	.scores-heading {
-		font-family: ui-monospace, monospace;
-		font-size: 0.85rem;
-		font-weight: 800;
-		color: #ffe600;
-		letter-spacing: 0.05em;
-		margin: 0 0 0.8rem 0;
-		text-align: center;
-		text-shadow: 0 0 8px rgba(255, 230, 0, 0.3);
-	}
-
-	.scores-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
 	}
 
 
@@ -387,73 +292,5 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		font-size: 0.75rem;
 		color: #4b5563;
 		font-family: ui-monospace, monospace;
-	}
-</style>
-
-<style is:global>
-	/*
-	 * These rules style .score-entry/.score-rank/.score-name/.score-pts/.empty-scores,
-	 * which are <li>/<span> elements created at runtime via document.createElement in
-	 * the client script below. Astro's scoped CSS only tags statically-rendered markup
-	 * with a data-astro-cid attribute, so scoped rules never match JS-created nodes.
-	 * These selectors must stay global for the high-score list styling to apply.
-	 */
-	#high-scores-list .score-entry {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 0.6rem;
-		font-family: ui-monospace, monospace;
-		font-size: 0.85rem;
-		background: #0b0f16;
-		padding: 0.4rem 0.6rem;
-		border-radius: 4px;
-		border: 1px solid #1a222f;
-	}
-
-	#high-scores-list .score-rank {
-		color: #7d8b9f;
-		font-weight: 700;
-		width: 30px;
-		flex-shrink: 0;
-	}
-
-	#high-scores-list .score-name {
-		color: #d1e4ff;
-		flex-grow: 1;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	#high-scores-list .score-pts {
-		color: #00f0ff;
-		font-weight: 700;
-		flex-shrink: 0;
-		white-space: nowrap;
-	}
-
-	#high-scores-list .empty-scores {
-		color: #64748b;
-		font-size: 0.8rem;
-		font-family: ui-monospace, monospace;
-		text-align: center;
-		padding: 0.5rem 0;
-	}
-
-	#high-scores-list .score-entry.newly-saved {
-		animation: scoreEntryFlash 1.6s ease-out;
-	}
-
-	@keyframes scoreEntryFlash {
-		0% {
-			background: rgba(0, 255, 159, 0.35);
-			box-shadow: 0 0 12px rgba(0, 255, 159, 0.6);
-		}
-		100% {
-			background: #0b0f16;
-			box-shadow: none;
-		}
 	}
 </style>
