@@ -28,17 +28,15 @@ milestone_status: open
 - **Scope anchors:**
   - FR-001 through FR-008, US-01 through US-03
 
-**M-02: Course-ready local score management** — Status: open
+**M-02: CRUD local score management** — Status: open
 
-- **Intent:** Remove course-compliance uncertainty by making local scores a clear
-  CRUD resource while adding useful local play statistics and preserving the
+- **Intent:** Add local scores system a clear CRUD resource while adding useful local play statistics and preserving the
   no-account, no-backend product direction.
-- **Source materials:** `context/foundation/prd.md` (v2),
-  `context/changes/course-crud-compliance/frame.md`
+- **Source materials:** `context/foundation/prd.md` (v2)
 - **Done when:** S-06 below is `done` with tests covering the score/statistics
   CRUD risk.
 - **Scope anchors:**
-  - FR-004, FR-007, course MVP CRUD requirement
+  - FR-004, FR-007, CRUD requirement
 
 ## Vision recap
 
@@ -59,7 +57,7 @@ The product promises instant, private play for a short break: a player should be
 | S-02 | local-score-replay | save a completed-round score locally and replay without losing progress | F-01, S-01 | FR-004, FR-007, US-02 | done |
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | done |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | done |
-| S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | not started |
+| S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | in-progress |
 
 ## Baseline
 
@@ -160,7 +158,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
     scoreboards without restructuring the storage contract. Owner: team. Block:
     no.
 - **Risk:** Requires testing the CRUD operations on score resource - a crucial part of the project.
-- **Status:** not started
+- **Status:** in-progress
 
 ## Backlog Handoff
 
@@ -171,7 +169,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 | S-02 | local-score-replay | Local score persistence and replay loop | yes | Implemented; return-to-catalogue remains scoped to S-05 |
 | S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Implemented |
 | S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Implemented |
-| S-06 | local-score-stats-crud | Local score CRUD and browser-profile stats | yes | New course-compliance slice; plan score Update/Delete, per-game scoreboards, catalogue cleanup, local stats, and data-clearing controls |
+| S-06 | local-score-stats-crud | Local score CRUD and browser-profile stats | yes | plan score Update/Delete, per-game scoreboards, catalogue cleanup, local stats, and data-clearing controls |
 
 ## Open Roadmap Questions
 

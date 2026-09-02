@@ -106,7 +106,7 @@ const preferences = getPreferences();
 	import { getThemeSymbols, type ThemeSymbol } from '../../lib/memory-game/themes';
 	import { playSound, initAudioContext } from '../../lib/sound';
 	import { getPreferences, setSoundEnabled } from '../../lib/preferences';
-	import { addScore, getScores } from '../../lib/scores';
+	import { addScore, getScoresForGame } from '../../lib/scores';
 
 	const MISMATCH_COOLDOWN_MS = 800;
 	const RESIZE_DEBOUNCE_MS = 150;
@@ -188,11 +188,12 @@ const preferences = getPreferences();
 
 				if (this.nextAction === 'restart' && this.pendingScore) {
 					const name = this.scoreNameInput.value.trim();
-					const previousLatestDate = getScores().reduce<string | null>(
+					const previousLatestDate = getScoresForGame('memory-cards').reduce<string | null>(
 						(latest, entry) => (latest === null || entry.date > latest ? entry.date : latest),
 						null,
 					);
 					const savedScores = addScore({
+						gameId: 'memory-cards',
 						name,
 						score: this.pendingScore.score,
 						roundsCompleted: this.pendingScore.roundsCompleted,

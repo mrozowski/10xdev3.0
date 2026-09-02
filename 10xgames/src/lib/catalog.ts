@@ -1,4 +1,4 @@
-import { getScores } from './scores';
+import { getScoresForGame } from './scores';
 
 export type GameTopScoreSummary = {
 	gameId: string;
@@ -15,7 +15,7 @@ export function getGameTopScoreSummary(gameId: string): GameTopScoreSummary {
 		};
 	}
 
-	const scores = getScores();
+	const scores = getScoresForGame(gameId);
 	const topScore = scores[0] ?? null;
 
 	return {

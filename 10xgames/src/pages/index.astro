@@ -55,7 +55,7 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 
 <script>
 	import { getGameTopScoreSummary } from '../lib/catalog';
-	import { getScores } from '../lib/scores';
+	import { getScoresForGame } from '../lib/scores';
 
 	const scoresList = document.getElementById('high-scores-list');
 	const catalogueView = document.getElementById('catalogue-view');
@@ -90,7 +90,7 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		}
 
 		scoresList.replaceChildren();
-		const scores = getScores();
+		const scores = getScoresForGame('memory-cards');
 
 		if (scores.length === 0) {
 			const emptyState = document.createElement('li');
