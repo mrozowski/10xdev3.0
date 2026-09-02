@@ -3,7 +3,7 @@ project: "10x Games"
 version: 2
 status: active
 created: 2026-08-31
-updated: 2026-09-01
+updated: 2026-09-02
 prd_version: 2
 main_goal: speed
 top_blocker: time
@@ -20,7 +20,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-01: Memory Cards MVP** — Status: open
+**M-01: Memory Cards MVP** — Status: done
 
 - **Intent:** Deliver a complete, private, instant-play Memory Cards experience that works on common devices and proves the product's core promise without backend infrastructure.
 - **Source materials:** `context/foundation/prd.md` (v1)
@@ -44,9 +44,9 @@ The product promises instant, private play for a short break: a player should be
 | ----- | ---------------------- | --------------------------------- | ---------------- | -------------- | -------- |
 | F-01 | local-score-contract | (foundation) track theme choices and locally saved scores under a frictionless name flow | — | FR-003, FR-007, US-02 | done |
 | S-01 | first-memory-round | choose Memory Cards, set theme/sound, and complete a first round | F-01 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01 | done |
-| S-02 | local-score-replay | save a completed-round score locally, replay, and return to the game list | F-01, S-01 | FR-004, FR-007, US-02 | in-progress |
-| S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | in-progress |
-| S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | in-progress |
+| S-02 | local-score-replay | save a completed-round score locally and replay without losing progress | F-01, S-01 | FR-004, FR-007, US-02 | done |
+| S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | done |
+| S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | done |
 
 ## Baseline
 
@@ -100,7 +100,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Unknowns:**
   - No blocking product unknowns remain; UI naming flows and local persistence rules should stay frictionless and local-only. Owner: team. Block: no.
 - **Risk:** If score persistence becomes intrusive or blocks replay, the product drifts from its instant-play promise and the local scoring loop will feel heavy instead of frictionless.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-03: Player can advance through progressively harder Memory Cards rounds
 
@@ -113,7 +113,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Unknowns:**
   - Pair counts and time limits must preserve a playable layout on phones, tablets, and desktop screens. Owner: team. Block: no.
 - **Risk:** Difficulty that rises too sharply or produces an unusable board on smaller screens undermines the short, approachable play experience.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Player can launch Memory Cards from the game catalogue
 
@@ -126,7 +126,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Unknowns:**
   - The transition and return affordance must preserve the instant-play feel on mobile and desktop. Owner: team. Block: no.
 - **Risk:** A heavy launcher flow could add friction, while no catalogue boundary makes future games require restructuring.
-- **Status:** planning
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -134,13 +134,13 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 | ---------- | ---------------------- | ----------------------------- | --------------------- | ----- |
 | F-01 | local-score-contract | Local score and theme state contract | yes | Minimal foundation for local persistence and settings |
 | S-01 | first-memory-round | Memory Cards first full round flow | yes | Implemented |
-| S-02 | local-score-replay | Local score persistence and replay loop | no | Awaiting review |
-| S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Run `/10x-plan progressive-memory-rounds` |
-| S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Run `/10x-plan game-catalogue-launcher` |
+| S-02 | local-score-replay | Local score persistence and replay loop | yes | Implemented; return-to-catalogue remains scoped to S-05 |
+| S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Implemented |
+| S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Implemented |
 
 ## Open Roadmap Questions
 
-1. **Round-tuning values are intentionally implementation-level.** Establish exact pair counts and time limits during `progressive-memory-rounds`, preserving playable layouts across supported devices. — Owner: team. Block: no.
+1. **Round-tuning values are intentionally implementation-level.** Exact pair counts and time limits are now established by `progressive-memory-rounds`, preserving playable layouts across supported devices. — Owner: team. Block: no.
 
 ## Parked
 
@@ -156,3 +156,6 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 
 - **F-01: Local score state and theme configuration contract** — completed.
 - **S-01: Player can start and complete a first Memory Cards round** — completed.
+- **S-02: Player can save and replay a completed-round score locally** — completed.
+- **S-03: Player can advance through progressively harder Memory Cards rounds** — completed.
+- **S-05: Player can launch Memory Cards from the game catalogue** — completed.

@@ -56,8 +56,8 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Load and launcher critical path | Prove a visitor can load, choose, start, and return from the game. | #1, #2 | build verification + browser e2e | change opened | testing-load-and-launcher-critical-path |
-| 2 | Game-state and local-score contracts | Preserve correct pair evaluation, frictionless local scores, and safe local names. | #3, #4, #5 | unit + integration; unit only for pair matching | in progress | — |
+| 1 | Load and launcher critical path | Prove a visitor can load, choose, start, and return from the game. | #1, #2 | build verification + browser e2e | complete | testing-load-and-launcher-critical-path |
+| 2 | Game-state and local-score contracts | Preserve correct pair evaluation, frictionless local scores, and safe local names. | #3, #4, #5 | unit + integration; unit only for pair matching | complete | — |
 | 3 | Quality-gate wiring | Make critical-path and contract checks repeatable before deployment. | cross-cutting | local + CI gates | not started | — |
 
 ## 4. Stack
@@ -88,13 +88,16 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 
 ### 6.1 Adding a unit test
 
-- TBD — see §3 Phase 2 for deterministic pair matching and local-name edge
-  cases (empty, long, and special-character input that must not throw).
+- `src/lib/memory-game/engine.test.ts` covers deterministic pair matching and
+  progressive-round transitions.
+- `src/lib/scores.test.ts` covers empty, long, and special-character names
+  through local persistence.
 
 ### 6.2 Adding an integration test
 
-- TBD — see §3 Phase 2 for completion, replay, storage-boundary behavior,
-  and persistence/rendering of a locally entered name.
+- The local score contract is covered at the module/storage boundary by
+  `src/lib/scores.test.ts`; the rendered normal-name save and replay boundary
+  is covered by `tests/local-score-replay.spec.ts`.
 
 ### 6.3 Adding an end-to-end test
 

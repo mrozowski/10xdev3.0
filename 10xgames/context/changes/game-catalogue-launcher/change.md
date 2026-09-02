@@ -1,9 +1,9 @@
 ---
 change_id: game-catalogue-launcher
 title: Game catalogue launcher and return flow
-status: impl_reviewed
+status: implemented
 created: 2026-09-01
-updated: 2026-09-01
+updated: 2026-09-02
 roadmap_ref: S-05
 prd_refs: [FR-001, US-01]
 ---

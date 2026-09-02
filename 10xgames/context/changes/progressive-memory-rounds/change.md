@@ -1,9 +1,9 @@
 ---
 change_id: progressive-memory-rounds
 title: Progressive memory rounds
-status: impl_reviewed
+status: implemented
 created: 2026-09-01
-updated: 2026-09-01
+updated: 2026-09-02
 archived_at: null
 ---
 
