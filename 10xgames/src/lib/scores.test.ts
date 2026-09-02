@@ -65,6 +65,16 @@ describe('addScore', () => {
 		expect(getScores().map(({ name }) => name)).toEqual(['Anonymous', 'Anonymous']);
 	});
 
+	it('persists long and special-character names as safe text', () => {
+		const longName = 'A'.repeat(500);
+		const specialName = '<img src=x onerror=alert(1)> & "quoted"';
+
+		addScore({ name: longName, score: 20 });
+		addScore({ name: specialName, score: 10 });
+
+		expect(getScores().map(({ name }) => name)).toEqual([longName, specialName]);
+	});
+
 	it('does not persist a non-finite runtime score', () => {
 		addScore({ name: 'Ada', score: 42 });
 		addScore({ name: 'Broken', score: Number.NaN });

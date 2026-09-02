@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-09-01
+> Last updated: 2026-09-02
 
 ## 1. Strategy
 
@@ -57,7 +57,7 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
 | 1 | Load and launcher critical path | Prove a visitor can load, choose, start, and return from the game. | #1, #2 | build verification + browser e2e | change opened | testing-load-and-launcher-critical-path |
-| 2 | Game-state and local-score contracts | Preserve correct pair evaluation, frictionless local scores, and safe local names. | #3, #4, #5 | unit + integration; unit only for pair matching | not started | — |
+| 2 | Game-state and local-score contracts | Preserve correct pair evaluation, frictionless local scores, and safe local names. | #3, #4, #5 | unit + integration; unit only for pair matching | in progress | — |
 | 3 | Quality-gate wiring | Make critical-path and contract checks repeatable before deployment. | cross-cutting | local + CI gates | not started | — |
 
 ## 4. Stack
@@ -101,7 +101,15 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 - Seed example: `tests/seed.spec.ts` covers Risk #2 (catalogue selection and return loop) with `getByRole` selectors, state-based waits, a unique `playwright-seed-*` session id in local storage, and cleanup via `localStorage.clear()`.
 - Follow the same pattern for future Phase 1 E2E tests: assert navigation and game-start state, not timing-based behavior.
 
-### 6.4 Per-rollout-phase notes
+### 6.4 Risk #4 contract coverage
+
+- `src/lib/scores.test.ts` covers missing/blank names (`Anonymous`) plus long
+  and special-character names round-tripping through local storage as text.
+- The browser-level normal-name save and replay path is covered by
+  `tests/local-score-replay.spec.ts` under Risk #3; no duplicate E2E is needed
+  for the isolated Risk #4 normalization contract.
+
+### 6.5 Per-rollout-phase notes
 
 - TBD — patterns are recorded here when each rollout phase ships.
 
