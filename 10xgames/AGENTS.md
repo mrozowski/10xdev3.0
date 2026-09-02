@@ -22,3 +22,13 @@ No test runner, single-test command, linter, or lint script is configured yet.
 - Foundation documents under `context/foundation/` are living documents: update them in place when product decisions change. Change-scoped planning belongs in `context/changes/<change-id>/`; do not modify `context/archive/`, which is immutable by convention.
 - `CLAUDE.md` is a symlink to this file. Keep project-specific agent guidance here and avoid duplicating it across agent configuration files.
 - Astro scopes `<style>` blocks per-component by default. When a CSS rule must reach markup rendered outside the component's own template (slots, dynamically injected markup, shared/child markup), use `:global()` or a global stylesheet — plain scoped styles will not apply.
+
+## E2E Testing Rules
+
+- Model every new Playwright spec on `tests/seed.spec.ts` — same locator style, `test.step` structure, and cleanup pattern.
+- Use `getByRole`, `getByLabel`, `getByText` as primary locators. Fall back to `getByTestId` only when accessibility attributes are ambiguous. Never use CSS selectors, XPath, or DOM structure.
+- Each test must be independently runnable — no shared state between tests.
+- Never use `page.waitForTimeout()`. Wait for specific conditions: `toBeVisible()`, `waitForURL()`, `waitForResponse()`.
+- Assert the business outcome, not implementation details.
+- Use unique identifiers (e.g., timestamp suffix) for test data to avoid collisions in parallel runs. Clean up in `afterEach` (see `clearTestStorage` in `tests/helpers/test-utils.ts`).
+- One test per file in `tests/`, named for the risk it protects (see `context/foundation/test-plan.md`), not `test('test 1', ...)`.
