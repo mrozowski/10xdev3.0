@@ -7,8 +7,8 @@ updated: 2026-09-02
 prd_version: 2
 main_goal: speed
 top_blocker: time
-milestone_id: memory-cards-mvp
-milestone_seq: 1
+milestone_id: fruit-rush-game
+milestone_seq: 3
 milestone_status: open
 ---
 
@@ -28,7 +28,7 @@ milestone_status: open
 - **Scope anchors:**
   - FR-001 through FR-008, US-01 through US-03
 
-**M-02: CRUD local score management** — Status: open
+**M-02: CRUD local score management** — Status: done
 
 - **Intent:** Add local scores system a clear CRUD resource while adding useful local play statistics and preserving the
   no-account, no-backend product direction.
@@ -37,6 +37,17 @@ milestone_status: open
   CRUD risk.
 - **Scope anchors:**
   - FR-004, FR-007, CRUD requirement
+
+**M-03: Additional games** — Status: open
+
+- **Intent:** Expand the catalogue with a second complete game while preserving
+  instant, private, device-local play and isolated game implementations.
+- **Source materials:** `context/foundation/prd.md` (v2),
+  `context/changes/fruit-rush-game/change.md`
+- **Done when:** S-07 below is `done` with deterministic engine tests and a
+  focused browser flow covering launch and core play.
+- **Scope anchors:**
+  - FR-001, FR-004, FR-007, platform growth direction
 
 ## Vision recap
 
@@ -57,7 +68,8 @@ The product promises instant, private play for a short break: a player should be
 | S-02 | local-score-replay | save a completed-round score locally and replay without losing progress | F-01, S-01 | FR-004, FR-007, US-02 | done |
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | done |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | done |
-| S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | in-progress |
+| S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | done |
+| S-07 | fruit-rush-game | launch and play a physics-based fruit-merging game from the catalogue | S-05, S-06 | FR-001, FR-004, FR-007 | planned |
 
 ## Baseline
 
@@ -158,7 +170,26 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
     scoreboards without restructuring the storage contract. Owner: team. Block:
     no.
 - **Risk:** Requires testing the CRUD operations on score resource - a crucial part of the project.
-- **Status:** in-progress
+- **Status:** done
+
+### S-07: Player can play Fruit Rush
+
+- **Outcome:** user can launch Fruit Rush from the catalogue, drop fruits into
+  a responsive container, merge matching fruits through the progression, see a
+  score, and restart after the container fills.
+- **Change ID:** fruit-rush-game
+- **PRD refs:** FR-001, FR-004, FR-007
+- **Prerequisites:** S-05, S-06
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Physics model, rendering approach, input controls, scoring, merge ordering,
+    loss condition, and asset strategy must be resolved during planning.
+    Owner: team. Block: no.
+- **Risk:** Continuous physics and cross-device input can make the game
+  unreliable or too heavy if the engine is coupled to rendering or uses an
+  unnecessary runtime dependency.
+- **Status:** planned
 
 ## Backlog Handoff
 
@@ -169,7 +200,8 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 | S-02 | local-score-replay | Local score persistence and replay loop | yes | Implemented; return-to-catalogue remains scoped to S-05 |
 | S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Implemented |
 | S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Implemented |
-| S-06 | local-score-stats-crud | Local score CRUD and browser-profile stats | yes | plan score Update/Delete, per-game scoreboards, catalogue cleanup, local stats, and data-clearing controls |
+| S-06 | local-score-stats-crud | Local score CRUD and browser-profile stats | yes | Implemented |
+| S-07 | fruit-rush-game | Fruit Rush physics-based merging game | no | Resolve physics, rendering, input, scoring, assets, and test contracts before planning |
 
 ## Open Roadmap Questions
 
@@ -178,12 +210,12 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 ## Parked
 
 - **Animals card theme (S-04, `animals-card-theme`)** — Why parked: product decision to keep Memory Cards to its single software-development theme; no change folder was started, so this slice is dropped rather than deferred. Growth focus shifts to new games instead of new themes.
-- **Additional games beyond Memory Cards** — Why parked: the current milestone (M-01) is scoped to shipping one complete Memory Cards experience first; once M-01 closes, a new milestone for additional games is the planned next step.
 - **Accounts and cloud score syncing** — Why parked: Access Control and Non-Goals explicitly exclude login and backend-based syncing in favor of private, device-local play.
 
 ## Milestone History
 
-(empty)
+- **M-01: Memory Cards MVP** — completed before roadmap v2.
+- **M-02: CRUD local score management** — completed on 2026-09-02.
 
 ## Done
 
