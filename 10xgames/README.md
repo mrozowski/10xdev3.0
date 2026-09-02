@@ -40,6 +40,27 @@ All commands are run from the root of the project, from a terminal:
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
+| `npm run test`            | Run all unit/integration tests once (Vitest)     |
+| `npm run test:watch`      | Run unit/integration tests in watch mode         |
+
+## 🧪 Unit & integration tests
+
+Unit and integration tests use [Vitest](https://vitest.dev) with `jsdom` and live alongside the code they cover (e.g. `src/lib/*.test.ts`).
+
+- Run the full suite once: `npm run test`
+- Run in watch mode while developing: `npm run test:watch`
+- Run a single file: `npm run test -- src/lib/scores.test.ts`
+- Run tests matching a name: `npm run test -- -t "score summary"`
+
+## 🎭 End-to-end (E2E) tests
+
+E2E tests use [Playwright](https://playwright.dev) and live in `tests/` (see `tests/seed.spec.ts` for the reference pattern all new specs should follow).
+
+1. Start the app so Playwright has something to drive: `npm run dev -- --host 127.0.0.1`
+2. In another terminal, run the tests against `http://127.0.0.1:4321/10xdev3.0/`:
+   - Full suite: `npx playwright test --reporter=line`
+   - A single spec: `npx playwright test tests/smoke.spec.ts --reporter=line`
+   - Playwright UI mode (debugging): `npx playwright test --ui`
 
 ## 🔧 Local quality hooks
 

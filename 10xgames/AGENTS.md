@@ -12,9 +12,9 @@
 
 Use Node.js `>=22.12.0` and npm.
 
-List of commands can be found at @README.md
+List of commands can be found at @README.md, including how to run unit tests (Vitest) and E2E tests (Playwright).
 
-No test runner, single-test command, linter, or lint script is configured yet.
+Lint (`npm run lint`) and typecheck (`npm run typecheck`) scripts are configured; see `.github/hooks/per-edit-lint.json` and `.husky/pre-commit` for when they run automatically.
 
 ## Repository conventions
 
