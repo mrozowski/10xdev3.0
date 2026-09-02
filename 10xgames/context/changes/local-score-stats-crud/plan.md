@@ -486,30 +486,30 @@ should still fail safely for malformed old data.
 
 #### Automated
 
-- [x] 2.1 `npm run typecheck` passes
-- [x] 2.2 `npm run test` passes
-- [x] 2.3 `npm run build` passes
+- [x] 2.1 `npm run typecheck` passes — 8cf8758
+- [x] 2.2 `npm run test` passes — 8cf8758
+- [x] 2.3 `npm run build` passes — 8cf8758
 
 #### Manual
 
-- [x] 2.4 The catalogue shows Memory Cards without a score/top-score summary
-- [x] 2.5 Memory Cards shows its own score table and stats panel below the game board
-- [x] 2.6 A saved score can be renamed inline; only the label changes
-- [x] 2.7 A single score can be deleted without deleting neighboring scores
-- [x] 2.8 Current-game scores can be cleared without clearing stats
-- [x] 2.9 Stats can be cleared without clearing scores
-- [x] 2.10 Browser-profile copy is visible and does not imply account-level privacy
+- [x] 2.4 The catalogue shows Memory Cards without a score/top-score summary — 8cf8758
+- [x] 2.5 Memory Cards shows its own score table and stats panel below the game board — 8cf8758
+- [x] 2.6 A saved score can be renamed inline; only the label changes — 8cf8758
+- [x] 2.7 A single score can be deleted without deleting neighboring scores — 8cf8758
+- [x] 2.8 Current-game scores can be cleared without clearing stats — 8cf8758
+- [x] 2.9 Stats can be cleared without clearing scores — 8cf8758
+- [x] 2.10 Browser-profile copy is visible and does not imply account-level privacy — 8cf8758
 
 ### Phase 3: Browser Flow Verification and Roadmap Handoff
 
 #### Automated
 
-- [ ] 3.1 `npm run test` passes
-- [ ] 3.2 `npm run typecheck` passes
-- [ ] 3.3 `npm run build` passes
-- [ ] 3.4 With a dev server running, `npx playwright test tests/local-score-stats-crud.spec.ts tests/local-score-replay.spec.ts --reporter=line` passes
+- [x] 3.1 `npm run test` passes
+- [x] 3.2 `npm run typecheck` passes
+- [x] 3.3 `npm run build` passes
+- [x] 3.4 With a dev server running, `npx playwright test tests/local-score-stats-crud.spec.ts tests/local-score-replay.spec.ts --reporter=line` passes
 
 #### Manual
 
-- [ ] 3.5 One browser run confirms the CRUD/stat flow is understandable on desktop
-- [ ] 3.6 One narrow mobile-width check confirms the in-game panel remains usable and does not push the card grid into an unusable layout
+- [x] 3.5 One browser run confirms the CRUD/stat flow is understandable on desktop
+- [x] 3.6 One narrow mobile-width check confirms the in-game panel remains usable and does not push the card grid into an unusable layout
