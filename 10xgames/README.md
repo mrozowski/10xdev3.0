@@ -41,6 +41,15 @@ All commands are run from the root of the project, from a terminal:
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
+## 🔧 Local quality hooks
+
+The repository includes two lightweight quality gates for local development:
+
+- `.husky/pre-commit` runs `git diff --cached --check` and `npm run lint` before a commit.
+- `.github/hooks/per-edit-lint.json` configures Copilot hooks so `npm run lint` runs after agent edits and `npm run typecheck` runs before tool use.
+
+These checks are intentionally scoped to staged or edited files to stay fast.
+
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).

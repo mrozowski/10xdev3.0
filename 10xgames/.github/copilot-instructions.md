@@ -22,6 +22,12 @@ Use Node.js `>=22.12.0` and npm.
 
 No test runner, single-test command, linter, or lint script is configured yet.
 
+## Local quality hooks
+
+- `.husky/pre-commit` runs `git diff --cached --check` and `npm run lint` before a commit.
+- `.github/hooks/per-edit-lint.json` configures Copilot hooks so `npm run lint` runs after agent edits and `npm run typecheck` runs before tool use.
+- The staged-file wrapper in `10xgames/scripts/check-staged.mjs` keeps these checks fast by targeting staged files instead of the whole project.
+
 ## Repository conventions
 
 - Preserve Astro's static-output model. Configure `site` and any required `base` path in `astro.config.mjs` as part of GitHub Pages deployment work.
