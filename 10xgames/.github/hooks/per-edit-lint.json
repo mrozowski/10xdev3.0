@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "npm run lint",
+        "powershell": "npm run lint",
+        "cwd": ".",
+        "timeoutSec": 120
+      }
+    ]
+  }
+}
