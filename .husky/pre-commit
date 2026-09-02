@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+cd /workspace/10xgames && git diff --cached --check && npm run lint

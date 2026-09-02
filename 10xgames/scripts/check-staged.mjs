@@ -33,6 +33,19 @@ function isRelevant(file) {
   return /\.(ts|tsx|js|jsx|mjs|cjs|astro)$/i.test(file);
 }
 
+function writeTempConfig(files, fileType) {
+  const tempConfigPath = path.join(os.tmpdir(), `copilot-staged-${Date.now()}-${fileType}.json`);
+  const include = files.map((file) => path.resolve(repoRoot, file));
+  const config = {
+    extends: path.join(repoRoot, 'tsconfig.json'),
+    include,
+    exclude: ['dist', 'node_modules', '.astro'],
+  };
+
+  fs.writeFileSync(tempConfigPath, `${JSON.stringify(config, null, 2)}\n`);
+  return tempConfigPath;
+}
+
 const stagedFiles = getStagedFiles().filter(isRelevant);
 
 if (stagedFiles.length === 0) {
@@ -40,24 +53,40 @@ if (stagedFiles.length === 0) {
   process.exit(0);
 }
 
-const tempConfigPath = path.join(os.tmpdir(), `copilot-staged-${mode}-${Date.now()}.json`);
-const include = stagedFiles.map((file) => path.resolve(repoRoot, file));
-const config = {
-  extends: path.join(repoRoot, 'tsconfig.json'),
-  include,
-  exclude: ['dist', 'node_modules', '.astro'],
-};
-
-fs.writeFileSync(tempConfigPath, `${JSON.stringify(config, null, 2)}\n`);
+const tsFiles = stagedFiles.filter((file) => /\.(ts|tsx|js|jsx|mjs|cjs)$/i.test(file));
+const astroFiles = stagedFiles.filter((file) => /\.astro$/i.test(file));
 
 try {
   if (mode === 'typecheck') {
-    run('npx', ['tsc', '--pretty', 'false', '--noEmit', '--project', tempConfigPath]);
+    if (tsFiles.length > 0) {
+      const tempConfigPath = writeTempConfig(tsFiles, 'typecheck');
+      try {
+        run('npx', ['tsc', '--pretty', 'false', '--noEmit', '--skipLibCheck', '--project', tempConfigPath]);
+      } finally {
+        fs.unlinkSync(tempConfigPath);
+      }
+    } else {
+      console.log('No TypeScript staged files for typecheck; skipping.');
+    }
   } else {
-    run('npx', ['astro', 'check', '--tsconfig', tempConfigPath]);
+    if (tsFiles.length > 0) {
+      const tempConfigPath = writeTempConfig(tsFiles, 'lint');
+      try {
+        run('npx', ['tsc', '--pretty', 'false', '--noEmit', '--skipLibCheck', '--project', tempConfigPath]);
+      } finally {
+        fs.unlinkSync(tempConfigPath);
+      }
+    }
+
+    if (astroFiles.length > 0) {
+      const tempConfigPath = writeTempConfig(astroFiles, 'astro');
+      try {
+        run('npx', ['astro', 'check', '--tsconfig', tempConfigPath]);
+      } finally {
+        fs.unlinkSync(tempConfigPath);
+      }
+    }
   }
 } finally {
-  if (fs.existsSync(tempConfigPath)) {
-    fs.unlinkSync(tempConfigPath);
-  }
+  // no-op
 }

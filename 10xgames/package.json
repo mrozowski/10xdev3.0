@@ -13,7 +13,8 @@
     "lint": "node ./scripts/check-staged.mjs --lint",
     "typecheck": "node ./scripts/check-staged.mjs --typecheck",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "astro": "^7.2.9"
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
