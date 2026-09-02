@@ -28,6 +28,18 @@ milestone_status: open
 - **Scope anchors:**
   - FR-001 through FR-008, US-01 through US-03
 
+**M-02: Course-ready local score management** — Status: open
+
+- **Intent:** Remove course-compliance uncertainty by making local scores a clear
+  CRUD resource while adding useful local play statistics and preserving the
+  no-account, no-backend product direction.
+- **Source materials:** `context/foundation/prd.md` (v2),
+  `context/changes/course-crud-compliance/frame.md`
+- **Done when:** S-06 below is `done` with tests covering the score/statistics
+  CRUD risk.
+- **Scope anchors:**
+  - FR-004, FR-007, course MVP CRUD requirement
+
 ## Vision recap
 
 The product promises instant, private play for a short break: a player should be able to open the site, choose Memory Cards, and start a complete, progressively harder game without sign-up or installation. The MVP stays deliberately narrow: one polished retro game with local score storage, and no backend or account system. Post-MVP growth is expected to come from adding new games, not new Memory Cards themes.
@@ -47,6 +59,7 @@ The product promises instant, private play for a short break: a player should be
 | S-02 | local-score-replay | save a completed-round score locally and replay without losing progress | F-01, S-01 | FR-004, FR-007, US-02 | done |
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | done |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | done |
+| S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | not started |
 
 ## Baseline
 
@@ -128,6 +141,27 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Risk:** A heavy launcher flow could add friction, while no catalogue boundary makes future games require restructuring.
 - **Status:** done
 
+### S-06: Player can manage per-game local scores and stats
+
+- **Outcome:** user can view a score table inside each game, rename a saved
+  score label, delete individual scores, clear scores for the current game,
+  and view/clear local play statistics such as total play time, total points,
+  points per game, time play per game, and last-played dates.
+- **Change ID:** local-score-stats-crud
+- **PRD refs:** FR-004, FR-007,
+- **Prerequisites:** F-01, S-02, S-05
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Shared-device wording must avoid implying account-level privacy. The UI
+    should describe scores and stats as local to the current browser profile.
+    Owner: team. Block: no.
+  - Score tables should be game-scoped now so future games can add their own
+    scoreboards without restructuring the storage contract. Owner: team. Block:
+    no.
+- **Risk:** Requires testing the CRUD operations on score resource - a crucial part of the project.
+- **Status:** not started
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -137,6 +171,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 | S-02 | local-score-replay | Local score persistence and replay loop | yes | Implemented; return-to-catalogue remains scoped to S-05 |
 | S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Implemented |
 | S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Implemented |
+| S-06 | local-score-stats-crud | Local score CRUD and browser-profile stats | yes | New course-compliance slice; plan score Update/Delete, per-game scoreboards, catalogue cleanup, local stats, and data-clearing controls |
 
 ## Open Roadmap Questions
 
