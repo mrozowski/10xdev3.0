@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@playwright/test": "^1.62.1",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "typescript": "^6.0.3",

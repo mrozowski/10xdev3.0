@@ -98,7 +98,8 @@ Source column cites evidence that surfaced a risk, not where it lives in code.
 
 ### 6.3 Adding an end-to-end test
 
-- TBD — see §3 Phase 1 for catalogue selection, game startup, and return behavior.
+- Seed example: `tests/seed.spec.ts` covers Risk #2 (catalogue selection and return loop) with `getByRole` selectors, state-based waits, a unique `playwright-seed-*` session id in local storage, and cleanup via `localStorage.clear()`.
+- Follow the same pattern for future Phase 1 E2E tests: assert navigation and game-start state, not timing-based behavior.
 
 ### 6.4 Per-rollout-phase notes
 

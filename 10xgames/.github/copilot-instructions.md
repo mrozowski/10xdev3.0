@@ -28,6 +28,12 @@ No test runner, single-test command, linter, or lint script is configured yet.
 - `.github/hooks/per-edit-lint.json` configures Copilot hooks so `npm run lint` runs after agent edits and `npm run typecheck` runs before tool use.
 - The staged-file wrapper in `10xgames/scripts/check-staged.mjs` keeps these checks fast by targeting staged files instead of the whole project.
 
+## Playwright smoke test
+
+- Run the app locally with `npm run dev -- --host 127.0.0.1`.
+- The smoke test lives in `tests/smoke.spec.ts` and targets `http://127.0.0.1:4321/10xdev3.0/`.
+- Run it with `npx playwright test tests/smoke.spec.ts --reporter=line`.
+
 ## Repository conventions
 
 - Preserve Astro's static-output model. Configure `site` and any required `base` path in `astro.config.mjs` as part of GitHub Pages deployment work.
