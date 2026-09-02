@@ -504,12 +504,12 @@ should still fail safely for malformed old data.
 
 #### Automated
 
-- [x] 3.1 `npm run test` passes
-- [x] 3.2 `npm run typecheck` passes
-- [x] 3.3 `npm run build` passes
-- [x] 3.4 With a dev server running, `npx playwright test tests/local-score-stats-crud.spec.ts tests/local-score-replay.spec.ts --reporter=line` passes
+- [x] 3.1 `npm run test` passes — 36ff7b4
+- [x] 3.2 `npm run typecheck` passes — 36ff7b4
+- [x] 3.3 `npm run build` passes — 36ff7b4
+- [x] 3.4 With a dev server running, `npx playwright test tests/local-score-stats-crud.spec.ts tests/local-score-replay.spec.ts --reporter=line` passes — 36ff7b4
 
 #### Manual
 
-- [x] 3.5 One browser run confirms the CRUD/stat flow is understandable on desktop
-- [x] 3.6 One narrow mobile-width check confirms the in-game panel remains usable and does not push the card grid into an unusable layout
+- [x] 3.5 One browser run confirms the CRUD/stat flow is understandable on desktop — 36ff7b4
+- [x] 3.6 One narrow mobile-width check confirms the in-game panel remains usable and does not push the card grid into an unusable layout — 36ff7b4
