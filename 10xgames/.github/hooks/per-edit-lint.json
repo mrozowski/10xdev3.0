@@ -9,6 +9,15 @@
         "cwd": ".",
         "timeoutSec": 120
       }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "npm run typecheck",
+        "powershell": "npm run typecheck",
+        "cwd": ".",
+        "timeoutSec": 120
+      }
     ]
   }
 }
