@@ -1,76 +1,129 @@
-# Astro Starter Kit: Basics
+# 10x Games
 
-```sh
-npm create astro@latest -- --template basics
-```
+Retro browser-game collection built with Astro. The app runs fully on the client: no backend, no accounts, no cloud sync. Scores and stats are stored locally in the browser.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Stack
 
-## 🚀 Project Structure
+- JavaScript + TypeScript
+- Astro 7
+- Vitest for unit/integration tests
+- Playwright for end-to-end checks
+- Matter.js for physics
+- GitHub Pages deployment
 
-Inside of your Astro project, you'll see the following folders and files:
+## Project tree
 
 ```text
-/
+10xgames/
+├── src/
+│   ├── components/game/
+│   │   ├── MemoryGame.astro
+│   │   └── FruitRushGame.astro
+│   ├── lib/
+│   │   ├── scores.ts          # read/write/rename/delete local scores
+│   │   ├── stats.ts           # read/write/clear local game stats
+│   │   ├── storage.ts         # safe browser storage wrappers
+│   │   ├── catalog.ts         # catalogue entry metadata
+│   │   ├── memory-game/       # Memory Cards logic/tests
+│   │   └── fruit-rush/        # Fruit Rush engine, adapters, tests
+│   ├── layouts/Layout.astro
+│   ├── pages/index.astro      # game catalogue + launcher shell
+│   └── assets/
+├── tests/
+│   ├── smoke.spec.ts
+│   ├── seed.spec.ts
+│   ├── game-load-and-start.spec.ts
+│   ├── local-score-replay.spec.ts
+│   ├── local-score-stats-crud.spec.ts
+│   └── helpers/
 ├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+├── context/                   # Agentic AI folder with documentations about project, plans, changes
+├── astro.config.mjs
+├── package.json
+├── AGENTS.md
+├── README.md
+└── .github/                   # Skills, prompts, hooks
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Requirements
 
-## 🧞 Commands
+- Node.js `>= 22.12.0`
+- npm
 
-All commands are run from the root of the project, from a terminal:
+Install:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-| `npm run test`            | Run all unit/integration tests once (Vitest)     |
-| `npm run test:watch`      | Run unit/integration tests in watch mode         |
+```bash
+npm install
+```
 
-## 🧪 Unit & integration tests
+## Run locally
 
-Unit and integration tests use [Vitest](https://vitest.dev) with `jsdom` and live alongside the code they cover (e.g. `src/lib/*.test.ts`).
+```bash
+npm run dev -- --host 127.0.0.1
+```
 
-- Run the full suite once: `npm run test`
-- Run in watch mode while developing: `npm run test:watch`
-- Run a single file: `npm run test -- src/lib/scores.test.ts`
-- Run tests matching a name: `npm run test -- -t "score summary"`
+Open:
 
-## 🎭 End-to-end (E2E) tests
+```text
+http://127.0.0.1:4321/10xdev3.0/
+```
 
-E2E tests use [Playwright](https://playwright.dev) and live in `tests/` (see `tests/seed.spec.ts` for the reference pattern all new specs should follow).
+Production build:
 
-1. Start the app so Playwright has something to drive: `npm run dev -- --host 127.0.0.1`
-2. In another terminal, run the tests against `http://127.0.0.1:4321/10xdev3.0/`:
-   - Full suite: `npx playwright test --reporter=line`
-   - A single spec: `npx playwright test tests/smoke.spec.ts --reporter=line`
-   - Playwright UI mode (debugging): `npx playwright test --ui`
+```bash
+npm run build
+npm run preview -- --host 127.0.0.1
+```
 
-## 🔧 Local quality hooks
+## Score and stats CRUD
 
-The repository includes two lightweight quality gates for local development:
+The project stores per-game scores and browser-local statistics in `src/lib/scores.ts` and `src/lib/stats.ts`.
 
-- `.husky/pre-commit` runs `git diff --cached --check` and `npm run lint` before a commit.
-- `.github/hooks/per-edit-lint.json` configures Copilot hooks so `npm run lint` runs after agent edits and `npm run typecheck` runs before tool use.
+- Read: `getScoresForGame()`, `getStats()`, `getGameStats()`
+- Write: `addScore()`, `recordGameOpened()`, `recordGameTime()`, `recordCompletedGame()`
+- Edit: `renameScore()`
+- Delete: `deleteScore()`, `clearScoresForGame()`, `clearStats()`
 
-These checks are intentionally scoped to staged or edited files to stay fast.
+This is intentionally device-local and does not require a backend or user accounts.
 
-## 👀 Want to learn more?
+## Tests
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+### Unit and integration
+
+```bash
+npm test
+```
+
+Single file example:
+
+```bash
+npm run test -- src/lib/scores.test.ts
+npm run test -- src/lib/stats.test.ts
+```
+
+### End-to-end (Playwright)
+
+Start the app first:
+
+```bash
+npm run dev -- --host 127.0.0.1
+```
+
+Then run:
+
+```bash
+npx playwright test --reporter=line
+```
+
+Single smoke check:
+
+```bash
+npx playwright test tests/smoke.spec.ts --reporter=line
+```
+
+## Useful checks
+
+```bash
+npm run lint
+npm run typecheck
+```

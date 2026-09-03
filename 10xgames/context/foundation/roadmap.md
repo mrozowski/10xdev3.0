@@ -38,7 +38,7 @@ milestone_status: open
 - **Scope anchors:**
   - FR-004, FR-007, CRUD requirement
 
-**M-03: Additional games** — Status: open
+**M-03: Additional games** — Status: done
 
 - **Intent:** Expand the catalogue with a second complete game while preserving
   instant, private, device-local play and isolated game implementations.
@@ -69,7 +69,7 @@ The product promises instant, private play for a short break: a player should be
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | done |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | done |
 | S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | done |
-| S-07 | fruit-rush-game | launch and play a physics-based fruit-merging game from the catalogue | S-05, S-06 | FR-001, FR-004, FR-007 | in-progress |
+| S-07 | fruit-rush-game | launch and play a physics-based fruit-merging game from the catalogue | S-05, S-06 | FR-001, FR-004, FR-007 | done |
 
 ## Baseline
 
@@ -189,7 +189,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Risk:** Continuous physics and cross-device input can make the game
   unreliable or too heavy if the engine is coupled to rendering or uses an
   unnecessary runtime dependency.
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -201,7 +201,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 | S-03 | progressive-memory-rounds | Progressive Memory Cards round difficulty | yes | Implemented |
 | S-05 | game-catalogue-launcher | Game catalogue launcher and return flow | yes | Implemented |
 | S-06 | local-score-stats-crud | Local score CRUD and browser-profile stats | yes | Implemented |
-| S-07 | fruit-rush-game | Fruit Rush physics-based merging game | no | Resolve physics, rendering, input, scoring, assets, and test contracts before planning |
+| S-07 | fruit-rush-game | Fruit Rush physics-based merging game | yes | Implemented; completed game is now part of the catalogue |
 
 ## Open Roadmap Questions
 
@@ -216,6 +216,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 
 - **M-01: Memory Cards MVP** — completed before roadmap v2.
 - **M-02: CRUD local score management** — completed on 2026-09-02.
+- **M-03: Additional games** — completed on 2026-09-03.
 
 ## Done
 
@@ -224,3 +225,5 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **S-02: Player can save and replay a completed-round score locally** — completed.
 - **S-03: Player can advance through progressively harder Memory Cards rounds** — completed.
 - **S-05: Player can launch Memory Cards from the game catalogue** — completed.
+- **S-06: Player can manage per-game local scores and stats** — completed.
+- **S-07: Player can play Fruit Rush** — completed.
