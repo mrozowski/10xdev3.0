@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Strawberry">
+  <path d="M64 117c-27-19-43-42-43-64 0-22 18-35 38-24 3 2 7 2 10 0 20-11 38 2 38 24 0 22-16 45-43 64z" fill="#ff6078" stroke="#101827" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M39 30c11-15 39-15 50 0l-12 14H51z" fill="#3ad66f" stroke="#101827" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M43 52c11-10 31-14 47-6" fill="none" stroke="#ff9aa9" stroke-width="7" stroke-linecap="round"/>
+  <g fill="#ffeaa7"><circle cx="47" cy="63" r="4"/><circle cx="67" cy="59" r="4"/><circle cx="84" cy="70" r="4"/><circle cx="56" cy="84" r="4"/><circle cx="73" cy="94" r="4"/></g>
+</svg>

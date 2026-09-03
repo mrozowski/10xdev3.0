@@ -1,0 +1,511 @@
+<section class="fruit-rush" data-fruit-rush-root aria-labelledby="fruit-rush-title">
+	<div class="fruit-rush__hud">
+		<div>
+			<p class="fruit-rush__eyebrow">FRUIT RUSH</p>
+			<h2 id="fruit-rush-title">Drop, merge, survive</h2>
+		</div>
+		<div class="fruit-rush__stats" aria-live="polite">
+			<span>Score <strong data-fruit-rush-score>0</strong></span>
+			<span>Next <strong data-fruit-rush-next>Blueberry</strong></span>
+		</div>
+	</div>
+
+	<div class="fruit-rush__preview" aria-hidden="true">
+		<img data-fruit-rush-next-image alt="" width="48" height="48" />
+	</div>
+
+	<div class="fruit-rush__playfield" data-fruit-rush-playfield>
+		<canvas
+			class="fruit-rush__canvas"
+			data-fruit-rush-canvas
+			width="480"
+			height="640"
+			aria-label="Fruit Rush playfield"
+		></canvas>
+		<div class="fruit-rush__danger-line" aria-hidden="true"></div>
+		<div class="fruit-rush__aim" data-fruit-rush-aim aria-hidden="true"></div>
+	</div>
+
+	<div class="fruit-rush__controls">
+		<button class="fruit-rush__button" type="button" data-fruit-rush-drop>DROP FRUIT</button>
+		<button class="fruit-rush__button fruit-rush__button--secondary" type="button" data-fruit-rush-restart>
+			RESTART
+		</button>
+	</div>
+
+	<p class="fruit-rush__status" data-fruit-rush-status aria-live="polite">
+		Move the aim line, then drop fruit into the container.
+	</p>
+</section>
+
+<script>
+	import { addScore } from '../../lib/scores';
+	import { recordCompletedGame, recordGameOpened, recordGameTime } from '../../lib/stats';
+	import {
+		BOARD_MAX_X,
+		BOARD_MIN_X,
+		advanceDangerGrace,
+		createInitialState,
+		dropFruit,
+		resetGame,
+		resolveBoardState,
+	} from '../../lib/fruit-rush/engine';
+	import { getFruitDefinition } from '../../lib/fruit-rush/fruits';
+	import { getFruitAsset } from '../../lib/fruit-rush/assets';
+	import type { FruitRushPhysicsAdapter } from '../../lib/fruit-rush/physics-adapter';
+	import type { FruitBodySnapshot, FruitRushState } from '../../lib/fruit-rush/types';
+
+	const GAME_ID = 'fruit-rush';
+	const root = document.querySelector<HTMLElement>('[data-fruit-rush-root]');
+	const playfield = root?.querySelector<HTMLElement>('[data-fruit-rush-playfield]');
+	const canvas = root?.querySelector<HTMLCanvasElement>('[data-fruit-rush-canvas]');
+	const scoreNode = root?.querySelector<HTMLElement>('[data-fruit-rush-score]');
+	const nextNode = root?.querySelector<HTMLElement>('[data-fruit-rush-next]');
+	const nextImage = root?.querySelector<HTMLImageElement>('[data-fruit-rush-next-image]');
+	const aimNode = root?.querySelector<HTMLElement>('[data-fruit-rush-aim]');
+	const statusNode = root?.querySelector<HTMLElement>('[data-fruit-rush-status]');
+	const dropButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-drop]');
+	const restartButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-restart]');
+	const context = canvas?.getContext('2d');
+	const fruitImages = new Map<string, HTMLImageElement>();
+
+	let adapter: FruitRushPhysicsAdapter | null = null;
+	let state: FruitRushState = createInitialState();
+	let rafId = 0;
+	let lastFrameAt = 0;
+	let openStartedAt = 0;
+	let persistedGameOver = false;
+	let aimX = 0.5;
+	let isOpen = false;
+
+	function loadFruitImage(fruitId: string): HTMLImageElement {
+		const existing = fruitImages.get(fruitId);
+		if (existing) {
+			return existing;
+		}
+
+		const image = new Image();
+		image.src = getFruitAsset(fruitId as FruitBodySnapshot['fruitId']).src;
+		fruitImages.set(fruitId, image);
+		return image;
+	}
+
+	function resizeCanvas(): void {
+		if (!canvas || !playfield) {
+			return;
+		}
+
+		const rect = playfield.getBoundingClientRect();
+		const pixelRatio = window.devicePixelRatio || 1;
+		canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
+		canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
+		canvas.style.width = `${rect.width}px`;
+		canvas.style.height = `${rect.height}px`;
+		context?.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+	}
+
+	function drawFruit(body: FruitBodySnapshot, width: number, height: number): void {
+		if (!context) {
+			return;
+		}
+
+		const fruit = getFruitDefinition(body.fruitId);
+		const radius = body.radius * width;
+		const x = body.x * width;
+		const y = body.y * height;
+		const image = loadFruitImage(body.fruitId);
+
+		context.save();
+		context.beginPath();
+		context.arc(x, y, radius, 0, Math.PI * 2);
+		context.fillStyle = fruit.color;
+		context.fill();
+		if (image.complete) {
+			context.drawImage(image, x - radius, y - radius, radius * 2, radius * 2);
+		}
+		context.restore();
+	}
+
+	function render(): void {
+		if (!canvas || !context || !playfield) {
+			return;
+		}
+
+		const rect = playfield.getBoundingClientRect();
+		context.clearRect(0, 0, rect.width, rect.height);
+		context.fillStyle = '#09111d';
+		context.fillRect(0, 0, rect.width, rect.height);
+		context.strokeStyle = '#00f0ff';
+		context.lineWidth = 2;
+		context.strokeRect(1, 1, rect.width - 2, rect.height - 2);
+		context.strokeStyle = 'rgba(255, 0, 127, 0.8)';
+		context.setLineDash([8, 6]);
+		context.beginPath();
+		context.moveTo(0, state.dangerLineY * rect.height);
+		context.lineTo(rect.width, state.dangerLineY * rect.height);
+		context.stroke();
+		context.setLineDash([]);
+
+		for (const body of state.board) {
+			drawFruit(body, rect.width, rect.height);
+		}
+
+		if (scoreNode) {
+			scoreNode.textContent = String(state.score);
+		}
+		const nextFruit = getFruitDefinition(state.nextFruit);
+		if (nextNode) {
+			nextNode.textContent = nextFruit.label;
+		}
+		if (nextImage) {
+			nextImage.src = getFruitAsset(state.nextFruit).src;
+		}
+		if (aimNode) {
+			aimNode.style.left = `${aimX * 100}%`;
+		}
+		if (statusNode) {
+			statusNode.textContent =
+				state.status === 'game-over'
+					? `Game over! Final score: ${state.score}. Restart to play again.`
+					: 'Move the aim line, then drop fruit into the container.';
+		}
+		if (dropButton) {
+			dropButton.disabled = state.status === 'game-over';
+		}
+	}
+
+	function rebuildPhysicsFromState(): void {
+		if (!adapter) {
+			return;
+		}
+
+		adapter.clear();
+		for (const body of state.board) {
+			adapter.addFruit(body.id, body.fruitId, body.x, body.y, { vx: body.vx, vy: body.vy });
+		}
+	}
+
+	function syncResolvedState(nextBoard: FruitBodySnapshot[], elapsedMs: number): void {
+		const previousScore = state.score;
+		const resolvedState = resolveBoardState({
+			...state,
+			board: nextBoard,
+		});
+		state = advanceDangerGrace(resolvedState, elapsedMs);
+
+		if (state.score !== previousScore || state.board.length !== nextBoard.length) {
+			rebuildPhysicsFromState();
+		}
+
+		if (state.status === 'game-over' && !persistedGameOver) {
+			persistedGameOver = true;
+			addScore({ gameId: GAME_ID, score: state.score });
+			recordCompletedGame(GAME_ID, state.score);
+		}
+	}
+
+	function frame(now: number): void {
+		if (!isOpen || !adapter) {
+			return;
+		}
+
+		const elapsed = Math.min(64, now - lastFrameAt || 16);
+		lastFrameAt = now;
+		adapter.step(elapsed);
+		syncResolvedState(adapter.getSnapshots(), elapsed);
+		render();
+		rafId = window.requestAnimationFrame(frame);
+	}
+
+	async function ensureAdapter(): Promise<FruitRushPhysicsAdapter> {
+		if (adapter) {
+			return adapter;
+		}
+
+		const { FruitRushPhysicsAdapter } = await import('../../lib/fruit-rush/physics-adapter');
+		adapter = new FruitRushPhysicsAdapter();
+		return adapter;
+	}
+
+	async function openGame(): Promise<void> {
+		if (isOpen) {
+			return;
+		}
+
+		isOpen = true;
+		openStartedAt = Date.now();
+		recordGameOpened(GAME_ID);
+		resizeCanvas();
+		await ensureAdapter();
+		restart();
+		lastFrameAt = performance.now();
+		rafId = window.requestAnimationFrame(frame);
+	}
+
+	function closeGame(): void {
+		if (!isOpen) {
+			return;
+		}
+
+		isOpen = false;
+		window.cancelAnimationFrame(rafId);
+		if (openStartedAt > 0) {
+			recordGameTime(GAME_ID, Date.now() - openStartedAt);
+		}
+		openStartedAt = 0;
+	}
+
+	function restart(): void {
+		state = resetGame(state);
+		persistedGameOver = false;
+		aimX = 0.5;
+		rebuildPhysicsFromState();
+		render();
+	}
+
+	function dropCurrentFruit(): void {
+		if (!adapter || state.status === 'game-over') {
+			return;
+		}
+
+		const result = dropFruit(state, aimX);
+		if (!result.accepted) {
+			return;
+		}
+
+		const addedBody = result.state.board.find(
+			(body) => !state.board.some((existing) => existing.id === body.id),
+		);
+		state = result.state;
+		if (addedBody) {
+			adapter.addFruit(addedBody.id, addedBody.fruitId, addedBody.x, addedBody.y);
+		}
+		render();
+	}
+
+	function updateAimFromClientX(clientX: number): void {
+		if (!playfield) {
+			return;
+		}
+
+		const rect = playfield.getBoundingClientRect();
+		aimX = Math.min(Math.max((clientX - rect.left) / rect.width, BOARD_MIN_X), BOARD_MAX_X);
+		render();
+	}
+
+	window.addEventListener('fruit-rush:view-opened', () => {
+		void openGame();
+	});
+	window.addEventListener('fruit-rush:view-closed', closeGame);
+	window.addEventListener('pagehide', closeGame);
+	playfield?.addEventListener('pointermove', (event) => updateAimFromClientX(event.clientX));
+	playfield?.addEventListener('pointerdown', (event) => {
+		updateAimFromClientX(event.clientX);
+		dropCurrentFruit();
+	});
+	dropButton?.addEventListener('click', dropCurrentFruit);
+	restartButton?.addEventListener('click', restart);
+	window.addEventListener('keydown', (event) => {
+		if (!isOpen) {
+			return;
+		}
+
+		if (event.key === 'ArrowLeft') {
+			event.preventDefault();
+			aimX = Math.max(BOARD_MIN_X, aimX - 0.04);
+			render();
+		}
+		if (event.key === 'ArrowRight') {
+			event.preventDefault();
+			aimX = Math.min(BOARD_MAX_X, aimX + 0.04);
+			render();
+		}
+		if (event.code === 'Space') {
+			event.preventDefault();
+			dropCurrentFruit();
+		}
+	});
+
+	if (playfield && 'ResizeObserver' in window) {
+		const resizeObserver = new ResizeObserver(() => {
+			resizeCanvas();
+			render();
+		});
+		resizeObserver.observe(playfield);
+	}
+
+	for (const fruitId of state.queue) {
+		loadFruitImage(fruitId);
+	}
+	render();
+</script>
+
+<style>
+	.fruit-rush {
+		width: 100%;
+		max-width: 640px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.85rem;
+		color: #e5ebf5;
+	}
+
+	.fruit-rush__hud {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem;
+		border: 2px solid #232d3d;
+		border-radius: 14px;
+		background: rgba(17, 22, 32, 0.92);
+	}
+
+	.fruit-rush__eyebrow,
+	.fruit-rush__stats,
+	.fruit-rush__status,
+	.fruit-rush__button {
+		font-family: ui-monospace, monospace;
+	}
+
+	.fruit-rush__eyebrow {
+		margin: 0 0 0.3rem 0;
+		color: #ff007f;
+		font-size: 0.72rem;
+		font-weight: 800;
+		letter-spacing: 0.14em;
+	}
+
+	.fruit-rush h2 {
+		margin: 0;
+		color: #00ff9f;
+		font-size: 1.2rem;
+	}
+
+	.fruit-rush__stats {
+		display: grid;
+		gap: 0.35rem;
+		color: #c2c9d6;
+		font-size: 0.82rem;
+		text-align: right;
+	}
+
+	.fruit-rush__stats strong {
+		color: #ffe600;
+	}
+
+	.fruit-rush__preview {
+		align-self: center;
+		width: 64px;
+		height: 64px;
+		display: grid;
+		place-items: center;
+		border: 2px solid #232d3d;
+		border-radius: 999px;
+		background: #111620;
+		box-shadow: 0 0 18px rgba(255, 230, 0, 0.16);
+	}
+
+	.fruit-rush__preview img {
+		width: 48px;
+		height: 48px;
+	}
+
+	.fruit-rush__playfield {
+		position: relative;
+		align-self: center;
+		width: min(100%, 420px);
+		aspect-ratio: 3 / 4;
+		height: clamp(320px, 64svh, 560px);
+		max-height: 64svh;
+		border: 3px solid #232d3d;
+		border-radius: 16px;
+		overflow: hidden;
+		background: #09111d;
+		touch-action: none;
+		box-shadow: inset 0 0 22px rgba(0, 240, 255, 0.1), 0 14px 28px rgba(0, 0, 0, 0.3);
+	}
+
+	.fruit-rush__canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.fruit-rush__danger-line {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 22%;
+		border-top: 2px dashed rgba(255, 0, 127, 0.85);
+		pointer-events: none;
+	}
+
+	.fruit-rush__aim {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 2px;
+		background: rgba(255, 230, 0, 0.9);
+		box-shadow: 0 0 12px rgba(255, 230, 0, 0.7);
+		transform: translateX(-50%);
+		pointer-events: none;
+	}
+
+	.fruit-rush__controls {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.fruit-rush__button {
+		flex: 1 1 180px;
+		border: 2px solid #232d3d;
+		background: #00ff9f;
+		color: #08111d;
+		padding: 0.8rem 1rem;
+		border-radius: 12px;
+		font-weight: 900;
+		letter-spacing: 0.08em;
+		cursor: pointer;
+	}
+
+	.fruit-rush__button--secondary {
+		background: #111620;
+		color: #e5ebf5;
+	}
+
+	.fruit-rush__button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.fruit-rush__button:not(:disabled):hover,
+	.fruit-rush__button:focus-visible {
+		border-color: #00f0ff;
+		outline: none;
+	}
+
+	.fruit-rush__status {
+		margin: 0;
+		color: #c2c9d6;
+		font-size: 0.82rem;
+		text-align: center;
+	}
+
+	@media (max-width: 560px) {
+		.fruit-rush__hud {
+			flex-direction: column;
+		}
+
+		.fruit-rush__stats {
+			text-align: left;
+		}
+
+		.fruit-rush__playfield {
+			width: min(100%, 360px);
+			height: clamp(280px, 56svh, 480px);
+			max-height: 56svh;
+		}
+	}
+</style>

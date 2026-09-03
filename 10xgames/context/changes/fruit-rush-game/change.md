@@ -1,9 +1,9 @@
 ---
 change_id: fruit-rush-game
 title: Add Fruit Rush physics-based merging game
-status: planned
+status: impl_reviewed
 created: 2026-09-02
-updated: 2026-09-02
+updated: 2026-09-03
 archived_at: null
 ---
 

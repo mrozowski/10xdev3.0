@@ -3,7 +3,7 @@ project: "10x Games"
 version: 2
 status: active
 created: 2026-08-31
-updated: 2026-09-02
+updated: 2026-09-03
 prd_version: 2
 main_goal: speed
 top_blocker: time
@@ -69,7 +69,7 @@ The product promises instant, private play for a short break: a player should be
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | done |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | done |
 | S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | done |
-| S-07 | fruit-rush-game | launch and play a physics-based fruit-merging game from the catalogue | S-05, S-06 | FR-001, FR-004, FR-007 | planning |
+| S-07 | fruit-rush-game | launch and play a physics-based fruit-merging game from the catalogue | S-05, S-06 | FR-001, FR-004, FR-007 | in-progress |
 
 ## Baseline
 
@@ -189,7 +189,7 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Risk:** Continuous physics and cross-device input can make the game
   unreliable or too heavy if the engine is coupled to rendering or uses an
   unnecessary runtime dependency.
-- **Status:** planning
+- **Status:** in-progress
 
 ## Backlog Handoff
 

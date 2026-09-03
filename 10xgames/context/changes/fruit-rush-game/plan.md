@@ -439,9 +439,9 @@ completion metadata, preserve backward compatibility for existing records.
 
 #### Automated
 
-- [ ] 1.1 Fruit Rush domain and engine tests pass
-- [ ] 1.2 Engine and types compile without Matter.js imports
-- [ ] 1.3 Type checking passes with `npm run astro -- check`
+- [x] 1.1 Fruit Rush domain and engine tests pass
+- [x] 1.2 Engine and types compile without Matter.js imports
+- [x] 1.3 Type checking passes with `npm run astro -- check`
 
 #### Manual
 
@@ -451,9 +451,9 @@ completion metadata, preserve backward compatibility for existing records.
 
 #### Automated
 
-- [ ] 2.1 Matter adapter and boundary tests pass
-- [ ] 2.2 Strict Astro type checking passes
-- [ ] 2.3 Production build succeeds with game-only Matter.js loading
+- [x] 2.1 Matter adapter and boundary tests pass
+- [x] 2.2 Strict Astro type checking passes
+- [x] 2.3 Production build succeeds with game-only Matter.js loading
 
 #### Manual
 
@@ -463,10 +463,10 @@ completion metadata, preserve backward compatibility for existing records.
 
 #### Automated
 
-- [ ] 3.1 Astro type checking passes
-- [ ] 3.2 Existing unit tests pass
-- [ ] 3.3 Production build succeeds with island, assets, and catalogue entry
-- [ ] 3.4 Launch IDs and view event handling are wired
+- [x] 3.1 Astro type checking passes
+- [x] 3.2 Existing unit tests pass
+- [x] 3.3 Production build succeeds with island, assets, and catalogue entry
+- [x] 3.4 Launch IDs and view event handling are wired
 
 #### Manual
 
