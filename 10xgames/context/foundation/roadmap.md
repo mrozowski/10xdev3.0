@@ -44,8 +44,8 @@ milestone_status: open
   instant, private, device-local play and isolated game implementations.
 - **Source materials:** `context/foundation/prd.md` (v2),
   `context/changes/fruit-rush-game/change.md`
-- **Done when:** S-07 below is `done` with deterministic engine tests and a
-  focused browser flow covering launch and core play.
+- **Done when:** S-07 below is `done` with deterministic engine/adapter unit
+  tests and successful manual browser acceptance covering launch and core play.
 - **Scope anchors:**
   - FR-001, FR-004, FR-007, platform growth direction
 
@@ -69,7 +69,7 @@ The product promises instant, private play for a short break: a player should be
 | S-03 | progressive-memory-rounds | advance through increasingly difficult Memory Cards rounds | S-01 | FR-004, FR-008, US-03 | done |
 | S-05 | game-catalogue-launcher | choose Memory Cards from the game catalogue and return to it after play | S-01 | FR-001, US-01 | done |
 | S-06 | local-score-stats-crud | manage per-game scores and local play statistics without an account | F-01, S-02, S-05 | FR-004, FR-007, course MVP CRUD requirement | done |
-| S-07 | fruit-rush-game | launch and play a physics-based fruit-merging game from the catalogue | S-05, S-06 | FR-001, FR-004, FR-007 | planned |
+| S-07 | fruit-rush-game | launch and play a physics-based fruit-merging game from the catalogue | S-05, S-06 | FR-001, FR-004, FR-007 | planning |
 
 ## Baseline
 
@@ -183,13 +183,13 @@ What's already in place in the codebase as of `2026-08-31` (auto-researched + us
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
-  - Physics model, rendering approach, input controls, scoring, merge ordering,
-    loss condition, and asset strategy must be resolved during planning.
-    Owner: team. Block: no.
+  - None. Physics model, rendering approach, input controls, scoring, merge
+    ordering, loss condition, asset strategy, and test boundary are resolved in
+    the implementation plan. Owner: team. Block: no.
 - **Risk:** Continuous physics and cross-device input can make the game
   unreliable or too heavy if the engine is coupled to rendering or uses an
   unnecessary runtime dependency.
-- **Status:** planned
+- **Status:** planning
 
 ## Backlog Handoff
 
