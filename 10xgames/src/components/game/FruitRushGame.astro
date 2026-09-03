@@ -88,32 +88,32 @@ import '../../styles/local-data.css';
 				</div>
 				<dl class="stats-list">
 					<div class="stat-row">
-						<dt>Platform time</dt>
+						<dt>Fruit Rush browser time</dt>
 						<dd data-fruit-rush-stat-platform-time>0s</dd>
 					</div>
 					<div class="stat-row">
-						<dt>Fruit Rush time</dt>
+						<dt>Fruit Rush session time</dt>
 						<dd data-fruit-rush-stat-game-time>0s</dd>
 					</div>
 					<div class="stat-row">
-						<dt>Games played</dt>
+						<dt>Fruit Rush cycle count</dt>
 						<dd data-fruit-rush-stat-games-played>0</dd>
 					</div>
 					<div class="stat-row">
-						<dt>Total points</dt>
+						<dt>Fruit Rush total score</dt>
 						<dd data-fruit-rush-stat-total-points>0</dd>
 					</div>
 					<div class="stat-row">
-						<dt>Average points</dt>
+						<dt>Fruit Rush average score</dt>
 						<dd data-fruit-rush-stat-average-points>0</dd>
 					</div>
 					<div class="stat-row">
-						<dt>Average game time</dt>
+						<dt>Fruit Rush average run</dt>
 						<dd data-fruit-rush-stat-average-time>0s</dd>
 					</div>
 					<div class="stat-row">
-						<dt>Last played</dt>
-						<dd data-fruit-rush-stat-last-played>Never</dd>
+						<dt>Fruit Rush recent session</dt>
+						<dd data-fruit-rush-stat-last-played>No fruit rush session yet</dd>
 					</div>
 				</dl>
 			</section>
@@ -134,7 +134,7 @@ import '../../styles/local-data.css';
 
 			<div class="fruit-rush__name-entry-row">
 				<label for="fruit-rush-score-name-input" class="fruit-rush__name-entry-label">
-					Save score as:
+					Save Fruit Rush score as:
 				</label>
 				<input
 					id="fruit-rush-score-name-input"
@@ -143,6 +143,7 @@ import '../../styles/local-data.css';
 					maxlength="24"
 					placeholder="Anonymous"
 					autocomplete="off"
+					aria-label="Save Fruit Rush score as:"
 					data-fruit-rush-score-name
 				/>
 			</div>
@@ -339,7 +340,7 @@ import '../../styles/local-data.css';
 		}
 		if (statLastPlayed) {
 			statLastPlayed.textContent =
-				gameStats.lastPlayedAt === null ? 'Never' : formatDate(gameStats.lastPlayedAt);
+				gameStats.lastPlayedAt === null ? 'No fruit rush session yet' : formatDate(gameStats.lastPlayedAt);
 		}
 	}
 

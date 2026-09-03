@@ -9,7 +9,7 @@ Retro browser-game collection built with Astro. The app runs fully on the client
 - Vitest for unit/integration tests
 - Playwright for end-to-end checks
 - Matter.js for physics
-- GitHub Pages deployment
+- GitHub Pages: auto-deployment on push to master branch after pipeline with test passes.
 
 ## Project tree
 
