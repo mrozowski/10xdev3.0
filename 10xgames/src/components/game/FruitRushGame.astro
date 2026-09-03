@@ -12,6 +12,16 @@ import '../../styles/local-data.css';
 			<span>Score <strong data-fruit-rush-score>0</strong></span>
 			<span>Next <strong data-fruit-rush-next>Blueberry</strong></span>
 		</div>
+		<div class="fruit-rush__sound-control">
+			<button
+				class="fruit-rush__button fruit-rush__button--secondary fruit-rush__button--icon"
+				type="button"
+				data-fruit-rush-sound-toggle
+				aria-label="Toggle Sound"
+			>
+				<span data-fruit-rush-sound-icon>🔊</span>
+			</button>
+		</div>
 	</div>
 
 	<div class="fruit-rush__preview" aria-hidden="true">
@@ -155,6 +165,8 @@ import '../../styles/local-data.css';
 		recordGameOpened,
 		recordGameTime,
 	} from '../../lib/stats';
+	import { getPreferences, setSoundEnabled } from '../../lib/preferences';
+	import { initAudioContext, playSound } from '../../lib/sound';
 	import {
 		BOARD_MAX_X,
 		BOARD_MIN_X,
@@ -194,6 +206,8 @@ import '../../styles/local-data.css';
 	const statAveragePoints = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-average-points]');
 	const statAverageTime = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-average-time]');
 	const statLastPlayed = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-last-played]');
+	const soundToggleButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-sound-toggle]');
+	const soundIcon = root?.querySelector<HTMLElement>('[data-fruit-rush-sound-icon]');
 	const context = canvas?.getContext('2d');
 	const fruitImages = new Map<string, HTMLImageElement>();
 
@@ -292,6 +306,13 @@ import '../../styles/local-data.css';
 		const minutes = Math.floor(seconds / 60);
 		const remainingSeconds = seconds % 60;
 		return `${minutes}m ${remainingSeconds}s`;
+	}
+
+	function updateSoundIcon(enabled: boolean): void {
+		if (soundIcon) {
+			soundIcon.textContent = enabled ? '🔊' : '🔇';
+		}
+		soundToggleButton?.classList.toggle('muted', !enabled);
 	}
 
 	function renderStats(): void {
@@ -435,6 +456,10 @@ import '../../styles/local-data.css';
 			rebuildPhysicsFromState();
 		}
 
+		if (state.score > previousScore) {
+			playSound('match');
+		}
+
 		if (state.status === 'game-over' && !persistedGameOver) {
 			persistedGameOver = true;
 			pendingScore = state.score;
@@ -442,6 +467,7 @@ import '../../styles/local-data.css';
 			recordCompletedGame(GAME_ID, state.score);
 			renderStats();
 			showGameOverModal();
+			playSound('gameover');
 		}
 	}
 
@@ -510,6 +536,7 @@ import '../../styles/local-data.css';
 			return;
 		}
 
+		const previousScore = state.score;
 		const result = dropFruit(state, aimX);
 		if (!result.accepted) {
 			return;
@@ -521,6 +548,10 @@ import '../../styles/local-data.css';
 		state = result.state;
 		if (addedBody) {
 			adapter.addFruit(addedBody.id, addedBody.fruitId, addedBody.x, addedBody.y);
+		}
+		playSound('flip');
+		if (state.score > previousScore) {
+			playSound('match');
 		}
 		render();
 	}
@@ -546,7 +577,11 @@ import '../../styles/local-data.css';
 		dropCurrentFruit();
 	});
 	dropButton?.addEventListener('click', dropCurrentFruit);
-	restartButton?.addEventListener('click', restart);
+	restartButton?.addEventListener('click', () => {
+		initAudioContext();
+		playSound('tick');
+		restart();
+	});
 	clearScoresButton?.addEventListener('click', () => {
 		if (!window.confirm('Clear all Fruit Rush scores stored in this browser profile?')) {
 			return;
@@ -568,9 +603,22 @@ import '../../styles/local-data.css';
 		renderStats();
 	});
 	playAgainButton?.addEventListener('click', () => {
+		initAudioContext();
+		playSound('tick');
 		savePendingScore();
 		restart();
 	});
+	soundToggleButton?.addEventListener('click', () => {
+		initAudioContext();
+		const enabled = !getPreferences().soundEnabled;
+		setSoundEnabled(enabled);
+		updateSoundIcon(enabled);
+		if (enabled) {
+			playSound('tick');
+		}
+	});
+	// Unlock the browser AudioContext on the first user gesture anywhere in the game.
+	root?.addEventListener('pointerdown', () => initAudioContext(), { once: true });
 	window.addEventListener('keydown', (event) => {
 		if (!isOpen) {
 			return;
@@ -603,6 +651,7 @@ import '../../styles/local-data.css';
 	for (const fruitId of state.queue) {
 		loadFruitImage(fruitId);
 	}
+	updateSoundIcon(getPreferences().soundEnabled);
 	renderScores();
 	renderStats();
 	render();
@@ -760,6 +809,22 @@ import '../../styles/local-data.css';
 	.fruit-rush__button--danger:focus-visible {
 		border-color: #ff007f;
 		color: #ff007f;
+	}
+
+	.fruit-rush__sound-control {
+		display: flex;
+		align-items: flex-start;
+	}
+
+	.fruit-rush__button--icon {
+		flex: 0 0 auto;
+		padding: 0.5rem 0.65rem;
+		font-size: 1.1rem;
+		line-height: 1;
+	}
+
+	.fruit-rush__button--icon.muted {
+		opacity: 0.55;
 	}
 
 	.fruit-rush__primary-button {
