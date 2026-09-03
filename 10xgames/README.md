@@ -2,6 +2,10 @@
 
 Retro browser-game collection built with Astro. The app runs fully on the client: no backend, no accounts, no cloud sync. Scores and stats are stored locally in the browser.
 
+Included games:
+- Memory Cards: flip matching pairs to clear the board.
+- Fruit Rush: drop and merge matching fruits to survive the stack.
+
 ## Stack
 
 - JavaScript + TypeScript
@@ -87,6 +91,8 @@ The project stores per-game scores and browser-local statistics in `src/lib/scor
 This is intentionally device-local and does not require a backend or user accounts.
 
 ## Tests
+
+The project includes coverage for the main product risks: game load/start flow, local score CRUD operations, storage integrity. It also validates the core gameplay rules for MemoryCards game pair matching and round progression.
 
 ### Unit and integration
 
