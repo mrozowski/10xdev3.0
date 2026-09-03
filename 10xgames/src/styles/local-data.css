@@ -1,0 +1,250 @@
+.local-data-panel {
+	background: #111620;
+	border: 2px solid #232d3d;
+	border-radius: 10px;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.local-data-copy {
+	font-family: ui-monospace, monospace;
+	color: #94a3b8;
+	font-size: 0.78rem;
+	line-height: 1.5;
+}
+
+.local-data-copy p {
+	margin: 0.35rem 0 0 0;
+}
+
+.local-data-heading,
+.panel-heading {
+	font-family: ui-monospace, monospace;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	margin: 0;
+}
+
+.local-data-heading {
+	color: #ffe600;
+	font-size: 0.9rem;
+}
+
+.panel-heading {
+	color: #00ff9f;
+	font-size: 0.8rem;
+}
+
+.local-data-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+}
+
+.score-management-panel,
+.stats-panel {
+	background: #0b0f16;
+	border: 1px solid #1c2736;
+	border-radius: 8px;
+	padding: 0.85rem;
+}
+
+.panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+
+.managed-score-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.managed-score-row,
+.managed-score-empty {
+	background: #111620;
+	border: 1px solid #232d3d;
+	border-radius: 6px;
+	padding: 0.6rem;
+	font-family: ui-monospace, monospace;
+}
+
+.managed-score-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.managed-score-row.editing {
+	align-items: stretch;
+	flex-direction: column;
+}
+
+.managed-score-empty {
+	color: #64748b;
+	text-align: center;
+	font-size: 0.8rem;
+}
+
+.managed-score-details {
+	min-width: 0;
+	flex: 1;
+}
+
+.managed-score-primary {
+	display: flex;
+	align-items: baseline;
+	gap: 0.45rem;
+}
+
+.managed-score-rank {
+	color: #7d8b9f;
+	font-weight: 800;
+}
+
+.managed-score-name {
+	color: #d1e4ff;
+	font-weight: 800;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.managed-score-points {
+	color: #00f0ff;
+	font-weight: 800;
+	margin-left: auto;
+	white-space: nowrap;
+}
+
+.managed-score-meta {
+	color: #64748b;
+	font-size: 0.72rem;
+	margin-top: 0.25rem;
+}
+
+.managed-score-actions {
+	display: flex;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+}
+
+.local-data-panel .retro-btn {
+	background: #1a2230;
+	border: 1px solid #33445c;
+	border-radius: 6px;
+	color: #e2e8f0;
+	cursor: pointer;
+	font-family: ui-monospace, monospace;
+	font-weight: 700;
+	transition: all 0.15s ease;
+}
+
+.local-data-panel .retro-btn:hover,
+.local-data-panel .retro-btn:focus-visible {
+	background: #253347;
+	border-color: #00f0ff;
+	color: #00f0ff;
+	outline: none;
+}
+
+.compact-btn {
+	font-size: 0.72rem;
+	padding: 0.35rem 0.5rem;
+}
+
+.local-data-panel .danger-btn {
+	border-color: #7f1d1d;
+	color: #fecaca;
+}
+
+.local-data-panel .danger-btn:hover,
+.local-data-panel .danger-btn:focus-visible {
+	border-color: #ff007f;
+	color: #ff007f;
+}
+
+.local-data-panel .secondary-action-btn {
+	color: #94a3b8;
+}
+
+.managed-score-edit-label {
+	color: #94a3b8;
+	font-size: 0.75rem;
+}
+
+.managed-score-input {
+	background: #0b0f16;
+	border: 1px solid #232d3d;
+	border-radius: 6px;
+	color: #d1e4ff;
+	font-family: ui-monospace, monospace;
+	padding: 0.55rem 0.65rem;
+}
+
+.managed-score-input:focus {
+	outline: none;
+	border-color: #00f0ff;
+	box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.stats-list {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+	font-family: ui-monospace, monospace;
+}
+
+.stats-list .stat-row {
+	border-bottom: 1px solid #1c2736;
+	padding-bottom: 0.35rem;
+}
+
+.stats-list .stat-row:last-child {
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+.stats-list dt {
+	color: #94a3b8;
+}
+
+.stats-list dd {
+	color: #00f0ff;
+	font-weight: 800;
+	margin: 0;
+}
+
+.managed-score-row.newly-saved {
+	animation: scoreEntryFlash 1.6s ease-out;
+}
+
+@keyframes scoreEntryFlash {
+	0% {
+		background: rgba(0, 255, 159, 0.35);
+		box-shadow: 0 0 12px rgba(0, 255, 159, 0.6);
+	}
+	100% {
+		background: #111620;
+		box-shadow: none;
+	}
+}
+
+@media (max-width: 560px) {
+	.managed-score-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}

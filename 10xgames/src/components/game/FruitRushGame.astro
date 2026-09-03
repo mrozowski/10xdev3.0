@@ -1,0 +1,990 @@
+---
+import '../../styles/local-data.css';
+---
+
+<section class="fruit-rush" data-fruit-rush-root aria-labelledby="fruit-rush-title">
+	<div class="fruit-rush__hud">
+		<div>
+			<p class="fruit-rush__eyebrow">FRUIT RUSH</p>
+			<h2 id="fruit-rush-title">Drop, merge, survive</h2>
+		</div>
+		<div class="fruit-rush__stats" aria-live="polite">
+			<span>Score <strong data-fruit-rush-score>0</strong></span>
+			<span>Next <strong data-fruit-rush-next>Blueberry</strong></span>
+		</div>
+		<div class="fruit-rush__sound-control">
+			<button
+				class="fruit-rush__button fruit-rush__button--secondary fruit-rush__button--icon"
+				type="button"
+				data-fruit-rush-sound-toggle
+				aria-label="Toggle Sound"
+			>
+				<span data-fruit-rush-sound-icon>🔊</span>
+			</button>
+		</div>
+	</div>
+
+	<div class="fruit-rush__preview" aria-hidden="true">
+		<img data-fruit-rush-next-image alt="" width="48" height="48" />
+	</div>
+
+	<div class="fruit-rush__playfield" data-fruit-rush-playfield>
+		<canvas
+			class="fruit-rush__canvas"
+			data-fruit-rush-canvas
+			width="480"
+			height="640"
+			aria-label="Fruit Rush playfield"
+		></canvas>
+		<div class="fruit-rush__danger-line" aria-hidden="true"></div>
+		<div class="fruit-rush__aim" data-fruit-rush-aim aria-hidden="true"></div>
+	</div>
+
+	<div class="fruit-rush__controls">
+		<button class="fruit-rush__button" type="button" data-fruit-rush-drop>DROP FRUIT</button>
+		<button class="fruit-rush__button fruit-rush__button--secondary" type="button" data-fruit-rush-restart>
+			RESTART
+		</button>
+	</div>
+
+	<p class="fruit-rush__status" data-fruit-rush-status aria-live="polite">
+		Move the aim line, then drop fruit into the container.
+	</p>
+
+	<section class="local-data-panel" aria-labelledby="fruit-rush-local-data-heading">
+		<div class="local-data-copy">
+			<h2 id="fruit-rush-local-data-heading" class="local-data-heading">LOCAL GAME DATA</h2>
+			<p>
+				Scores are stored only in this browser profile. Everyone using this profile can
+				view, rename, or clear them.
+			</p>
+		</div>
+
+		<div class="local-data-grid">
+			<section class="score-management-panel" aria-labelledby="fruit-rush-scores-heading">
+				<div class="panel-header">
+					<h3 id="fruit-rush-scores-heading" class="panel-heading">SCORES</h3>
+					<button
+						class="fruit-rush__button fruit-rush__button--danger"
+						type="button"
+						data-fruit-rush-clear-scores
+					>
+						CLEAR SCORES
+					</button>
+				</div>
+				<ul class="managed-score-list" data-fruit-rush-score-list aria-live="polite"></ul>
+			</section>
+
+			<section class="stats-panel" aria-labelledby="fruit-rush-stats-heading">
+				<div class="panel-header">
+					<h3 id="fruit-rush-stats-heading" class="panel-heading">LOCAL STATS</h3>
+					<button
+						class="fruit-rush__button fruit-rush__button--danger"
+						type="button"
+						data-fruit-rush-clear-stats
+					>
+						CLEAR STATS
+					</button>
+				</div>
+				<dl class="stats-list">
+					<div class="stat-row">
+						<dt>Platform time</dt>
+						<dd data-fruit-rush-stat-platform-time>0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Fruit Rush time</dt>
+						<dd data-fruit-rush-stat-game-time>0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Games played</dt>
+						<dd data-fruit-rush-stat-games-played>0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Total points</dt>
+						<dd data-fruit-rush-stat-total-points>0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Average points</dt>
+						<dd data-fruit-rush-stat-average-points>0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Average game time</dt>
+						<dd data-fruit-rush-stat-average-time>0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Last played</dt>
+						<dd data-fruit-rush-stat-last-played>Never</dd>
+					</div>
+				</dl>
+			</section>
+		</div>
+	</section>
+
+	<div class="fruit-rush__modal-overlay hidden" data-fruit-rush-modal role="dialog" aria-modal="true">
+		<div class="fruit-rush__modal-card">
+			<h2 class="fruit-rush__modal-title">GAME OVER!</h2>
+			<p class="fruit-rush__modal-subtitle">The fruit stack crossed the danger line.</p>
+
+			<div class="fruit-rush__modal-stats">
+				<div class="stat-row">
+					<span>Final Score:</span>
+					<strong data-fruit-rush-final-score>0</strong>
+				</div>
+			</div>
+
+			<div class="fruit-rush__name-entry-row">
+				<label for="fruit-rush-score-name-input" class="fruit-rush__name-entry-label">
+					Save score as:
+				</label>
+				<input
+					id="fruit-rush-score-name-input"
+					class="fruit-rush__name-entry-input"
+					type="text"
+					maxlength="24"
+					placeholder="Anonymous"
+					autocomplete="off"
+					data-fruit-rush-score-name
+				/>
+			</div>
+
+			<button class="fruit-rush__button fruit-rush__primary-button" type="button" data-fruit-rush-play-again>
+				PLAY AGAIN
+			</button>
+		</div>
+	</div>
+</section>
+
+<script>
+	import { addScore, clearScoresForGame, getScoresForGame } from '../../lib/scores';
+	import { renderManagedScores } from '../../lib/managed-scores';
+	import {
+		clearStats,
+		getGameStatsSummary,
+		getStats,
+		recordCompletedGame,
+		recordGameOpened,
+		recordGameTime,
+	} from '../../lib/stats';
+	import { getPreferences, setSoundEnabled } from '../../lib/preferences';
+	import { initAudioContext, playSound } from '../../lib/sound';
+	import {
+		BOARD_MAX_X,
+		BOARD_MIN_X,
+		advanceDangerGrace,
+		createInitialState,
+		dropFruit,
+		resetGame,
+		resolveBoardState,
+	} from '../../lib/fruit-rush/engine';
+	import { getFruitDefinition } from '../../lib/fruit-rush/fruits';
+	import { getFruitAsset } from '../../lib/fruit-rush/assets';
+	import type { FruitRushPhysicsAdapter } from '../../lib/fruit-rush/physics-adapter';
+	import type { FruitBodySnapshot, FruitRushState } from '../../lib/fruit-rush/types';
+
+	const GAME_ID = 'fruit-rush';
+	const root = document.querySelector<HTMLElement>('[data-fruit-rush-root]');
+	const playfield = root?.querySelector<HTMLElement>('[data-fruit-rush-playfield]');
+	const canvas = root?.querySelector<HTMLCanvasElement>('[data-fruit-rush-canvas]');
+	const scoreNode = root?.querySelector<HTMLElement>('[data-fruit-rush-score]');
+	const nextNode = root?.querySelector<HTMLElement>('[data-fruit-rush-next]');
+	const nextImage = root?.querySelector<HTMLImageElement>('[data-fruit-rush-next-image]');
+	const aimNode = root?.querySelector<HTMLElement>('[data-fruit-rush-aim]');
+	const statusNode = root?.querySelector<HTMLElement>('[data-fruit-rush-status]');
+	const dropButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-drop]');
+	const restartButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-restart]');
+	const clearScoresButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-clear-scores]');
+	const clearStatsButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-clear-stats]');
+	const scoreList = root?.querySelector<HTMLElement>('[data-fruit-rush-score-list]');
+	const modal = root?.querySelector<HTMLElement>('[data-fruit-rush-modal]');
+	const finalScoreNode = root?.querySelector<HTMLElement>('[data-fruit-rush-final-score]');
+	const scoreNameInput = root?.querySelector<HTMLInputElement>('[data-fruit-rush-score-name]');
+	const playAgainButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-play-again]');
+	const statPlatformTime = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-platform-time]');
+	const statGameTime = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-game-time]');
+	const statGamesPlayed = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-games-played]');
+	const statTotalPoints = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-total-points]');
+	const statAveragePoints = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-average-points]');
+	const statAverageTime = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-average-time]');
+	const statLastPlayed = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-last-played]');
+	const soundToggleButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-sound-toggle]');
+	const soundIcon = root?.querySelector<HTMLElement>('[data-fruit-rush-sound-icon]');
+	const context = canvas?.getContext('2d');
+	const fruitImages = new Map<string, HTMLImageElement>();
+
+	let adapter: FruitRushPhysicsAdapter | null = null;
+	let state: FruitRushState = createInitialState();
+	let rafId = 0;
+	let lastFrameAt = 0;
+	let openStartedAt = 0;
+	let persistedGameOver = false;
+	let aimX = 0.5;
+	let isOpen = false;
+	let pendingScore: number | null = null;
+
+	function loadFruitImage(fruitId: string): HTMLImageElement {
+		const existing = fruitImages.get(fruitId);
+		if (existing) {
+			return existing;
+		}
+
+		const image = new Image();
+		image.src = getFruitAsset(fruitId as FruitBodySnapshot['fruitId']).src;
+		fruitImages.set(fruitId, image);
+		return image;
+	}
+
+	function resizeCanvas(): void {
+		if (!canvas || !playfield) {
+			return;
+		}
+
+		const rect = playfield.getBoundingClientRect();
+		const pixelRatio = window.devicePixelRatio || 1;
+		canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
+		canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
+		canvas.style.width = `${rect.width}px`;
+		canvas.style.height = `${rect.height}px`;
+		context?.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+	}
+
+	function drawFruit(body: FruitBodySnapshot, width: number, height: number): void {
+		if (!context) {
+			return;
+		}
+
+		const fruit = getFruitDefinition(body.fruitId);
+		const radius = body.radius * width;
+		const x = body.x * width;
+		const y = body.y * height;
+		const image = loadFruitImage(body.fruitId);
+
+		context.save();
+		context.beginPath();
+		context.arc(x, y, radius, 0, Math.PI * 2);
+		context.fillStyle = fruit.color;
+		context.fill();
+		if (image.complete) {
+			context.drawImage(image, x - radius, y - radius, radius * 2, radius * 2);
+		}
+		context.restore();
+	}
+
+	function renderScores(highlightId?: string): void {
+		if (!scoreList) {
+			return;
+		}
+
+		renderManagedScores({
+			gameId: GAME_ID,
+			gameLabel: 'Fruit Rush',
+			listElement: scoreList,
+			highlightId,
+			getMeta: (score) => `Played: ${formatDate(score.date)}`,
+		});
+	}
+
+	function formatDate(date: string): string {
+		const parsed = new Date(date);
+		if (Number.isNaN(parsed.getTime())) {
+			return 'Unknown date';
+		}
+
+		return parsed.toLocaleDateString(undefined, {
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+	}
+
+	function formatDuration(durationMs: number): string {
+		const seconds = Math.floor(durationMs / 1000);
+		if (seconds < 60) {
+			return `${seconds}s`;
+		}
+
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = seconds % 60;
+		return `${minutes}m ${remainingSeconds}s`;
+	}
+
+	function updateSoundIcon(enabled: boolean): void {
+		if (soundIcon) {
+			soundIcon.textContent = enabled ? '🔊' : '🔇';
+		}
+		soundToggleButton?.classList.toggle('muted', !enabled);
+	}
+
+	function renderStats(): void {
+		const stats = getStats();
+		const gameStats = getGameStatsSummary(GAME_ID);
+
+		if (statPlatformTime) {
+			statPlatformTime.textContent = formatDuration(stats.totalPlatformTimeMs);
+		}
+		if (statGameTime) {
+			statGameTime.textContent = formatDuration(gameStats.totalPlayTimeMs);
+		}
+		if (statGamesPlayed) {
+			statGamesPlayed.textContent = String(gameStats.gamesPlayed);
+		}
+		if (statTotalPoints) {
+			statTotalPoints.textContent = String(gameStats.totalPoints);
+		}
+		if (statAveragePoints) {
+			statAveragePoints.textContent = String(Math.round(gameStats.averagePoints));
+		}
+		if (statAverageTime) {
+			statAverageTime.textContent = formatDuration(gameStats.averagePlayTimeMs);
+		}
+		if (statLastPlayed) {
+			statLastPlayed.textContent =
+				gameStats.lastPlayedAt === null ? 'Never' : formatDate(gameStats.lastPlayedAt);
+		}
+	}
+
+	function flushGameTime(): void {
+		if (openStartedAt <= 0) {
+			return;
+		}
+
+		const now = Date.now();
+		recordGameTime(GAME_ID, now - openStartedAt);
+		openStartedAt = now;
+		renderStats();
+	}
+
+	function showGameOverModal(): void {
+		if (finalScoreNode) {
+			finalScoreNode.textContent = String(state.score);
+		}
+		if (scoreNameInput) {
+			scoreNameInput.value = '';
+		}
+		modal?.classList.remove('hidden');
+		scoreNameInput?.focus();
+	}
+
+	function hideGameOverModal(): void {
+		modal?.classList.add('hidden');
+	}
+
+	function savePendingScore(): void {
+		if (pendingScore === null) {
+			return;
+		}
+
+		const existingIds = new Set(getScoresForGame(GAME_ID).map(({ id }) => id));
+		const savedScores = addScore({
+			gameId: GAME_ID,
+			name: scoreNameInput?.value.trim(),
+			score: pendingScore,
+		});
+		const newEntryId = savedScores.find(({ id }) => !existingIds.has(id))?.id;
+		pendingScore = null;
+		renderScores(newEntryId);
+	}
+
+	function render(): void {
+		if (!canvas || !context || !playfield) {
+			return;
+		}
+
+		const rect = playfield.getBoundingClientRect();
+		context.clearRect(0, 0, rect.width, rect.height);
+		context.fillStyle = '#09111d';
+		context.fillRect(0, 0, rect.width, rect.height);
+		context.strokeStyle = '#00f0ff';
+		context.lineWidth = 2;
+		context.strokeRect(1, 1, rect.width - 2, rect.height - 2);
+		context.strokeStyle = 'rgba(255, 0, 127, 0.8)';
+		context.setLineDash([8, 6]);
+		context.beginPath();
+		context.moveTo(0, state.dangerLineY * rect.height);
+		context.lineTo(rect.width, state.dangerLineY * rect.height);
+		context.stroke();
+		context.setLineDash([]);
+
+		for (const body of state.board) {
+			drawFruit(body, rect.width, rect.height);
+		}
+
+		if (scoreNode) {
+			scoreNode.textContent = String(state.score);
+		}
+		const nextFruit = getFruitDefinition(state.nextFruit);
+		if (nextNode) {
+			nextNode.textContent = nextFruit.label;
+		}
+		if (nextImage) {
+			nextImage.src = getFruitAsset(state.nextFruit).src;
+		}
+		if (aimNode) {
+			aimNode.style.left = `${aimX * 100}%`;
+		}
+		if (statusNode) {
+			statusNode.textContent =
+				state.status === 'game-over'
+					? `Game over! Final score: ${state.score}. Restart to play again.`
+					: 'Move the aim line, then drop fruit into the container.';
+		}
+		if (dropButton) {
+			dropButton.disabled = state.status === 'game-over';
+		}
+	}
+
+	function rebuildPhysicsFromState(): void {
+		if (!adapter) {
+			return;
+		}
+
+		adapter.clear();
+		for (const body of state.board) {
+			adapter.addFruit(body.id, body.fruitId, body.x, body.y, { vx: body.vx, vy: body.vy });
+		}
+	}
+
+	function syncResolvedState(nextBoard: FruitBodySnapshot[], elapsedMs: number): void {
+		const previousScore = state.score;
+		const resolvedState = resolveBoardState({
+			...state,
+			board: nextBoard,
+		});
+		state = advanceDangerGrace(resolvedState, elapsedMs);
+
+		if (state.score !== previousScore || state.board.length !== nextBoard.length) {
+			rebuildPhysicsFromState();
+		}
+
+		if (state.score > previousScore) {
+			playSound('match');
+		}
+
+		if (state.status === 'game-over' && !persistedGameOver) {
+			persistedGameOver = true;
+			pendingScore = state.score;
+			flushGameTime();
+			recordCompletedGame(GAME_ID, state.score);
+			renderStats();
+			showGameOverModal();
+			playSound('gameover');
+		}
+	}
+
+	function frame(now: number): void {
+		if (!isOpen || !adapter) {
+			return;
+		}
+
+		const elapsed = Math.min(64, now - lastFrameAt || 16);
+		lastFrameAt = now;
+		adapter.step(elapsed);
+		syncResolvedState(adapter.getSnapshots(), elapsed);
+		render();
+		rafId = window.requestAnimationFrame(frame);
+	}
+
+	async function ensureAdapter(): Promise<FruitRushPhysicsAdapter> {
+		if (adapter) {
+			return adapter;
+		}
+
+		const { FruitRushPhysicsAdapter } = await import('../../lib/fruit-rush/physics-adapter');
+		adapter = new FruitRushPhysicsAdapter();
+		return adapter;
+	}
+
+	async function openGame(): Promise<void> {
+		if (isOpen) {
+			return;
+		}
+
+		isOpen = true;
+		openStartedAt = Date.now();
+		recordGameOpened(GAME_ID);
+		renderStats();
+		resizeCanvas();
+		await ensureAdapter();
+		restart();
+		lastFrameAt = performance.now();
+		rafId = window.requestAnimationFrame(frame);
+	}
+
+	function closeGame(): void {
+		if (!isOpen) {
+			return;
+		}
+
+		isOpen = false;
+		window.cancelAnimationFrame(rafId);
+		flushGameTime();
+		openStartedAt = 0;
+	}
+
+	function restart(): void {
+		state = resetGame(state);
+		persistedGameOver = false;
+		pendingScore = null;
+		aimX = 0.5;
+		hideGameOverModal();
+		rebuildPhysicsFromState();
+		render();
+	}
+
+	function dropCurrentFruit(): void {
+		if (!adapter || state.status === 'game-over') {
+			return;
+		}
+
+		const previousScore = state.score;
+		const result = dropFruit(state, aimX);
+		if (!result.accepted) {
+			return;
+		}
+
+		const addedBody = result.state.board.find(
+			(body) => !state.board.some((existing) => existing.id === body.id),
+		);
+		state = result.state;
+		if (addedBody) {
+			adapter.addFruit(addedBody.id, addedBody.fruitId, addedBody.x, addedBody.y);
+		}
+		playSound('flip');
+		if (state.score > previousScore) {
+			playSound('match');
+		}
+		render();
+	}
+
+	function updateAimFromClientX(clientX: number): void {
+		if (!playfield) {
+			return;
+		}
+
+		const rect = playfield.getBoundingClientRect();
+		aimX = Math.min(Math.max((clientX - rect.left) / rect.width, BOARD_MIN_X), BOARD_MAX_X);
+		render();
+	}
+
+	window.addEventListener('fruit-rush:view-opened', () => {
+		void openGame();
+	});
+	window.addEventListener('fruit-rush:view-closed', closeGame);
+	window.addEventListener('pagehide', closeGame);
+	playfield?.addEventListener('pointermove', (event) => updateAimFromClientX(event.clientX));
+	playfield?.addEventListener('pointerdown', (event) => {
+		updateAimFromClientX(event.clientX);
+		dropCurrentFruit();
+	});
+	dropButton?.addEventListener('click', dropCurrentFruit);
+	restartButton?.addEventListener('click', () => {
+		initAudioContext();
+		playSound('tick');
+		restart();
+	});
+	clearScoresButton?.addEventListener('click', () => {
+		if (!window.confirm('Clear all Fruit Rush scores stored in this browser profile?')) {
+			return;
+		}
+
+		clearScoresForGame(GAME_ID);
+		renderScores();
+	});
+	clearStatsButton?.addEventListener('click', () => {
+		if (!window.confirm('Clear local stats stored in this browser profile?')) {
+			return;
+		}
+
+		clearStats();
+		if (openStartedAt > 0) {
+			openStartedAt = Date.now();
+		}
+		window.dispatchEvent(new CustomEvent('fruit-rush:stats-cleared'));
+		renderStats();
+	});
+	playAgainButton?.addEventListener('click', () => {
+		initAudioContext();
+		playSound('tick');
+		savePendingScore();
+		restart();
+	});
+	soundToggleButton?.addEventListener('click', () => {
+		initAudioContext();
+		const enabled = !getPreferences().soundEnabled;
+		setSoundEnabled(enabled);
+		updateSoundIcon(enabled);
+		if (enabled) {
+			playSound('tick');
+		}
+	});
+	// Unlock the browser AudioContext on the first user gesture anywhere in the game.
+	root?.addEventListener('pointerdown', () => initAudioContext(), { once: true });
+	window.addEventListener('keydown', (event) => {
+		if (!isOpen) {
+			return;
+		}
+
+		if (event.key === 'ArrowLeft') {
+			event.preventDefault();
+			aimX = Math.max(BOARD_MIN_X, aimX - 0.04);
+			render();
+		}
+		if (event.key === 'ArrowRight') {
+			event.preventDefault();
+			aimX = Math.min(BOARD_MAX_X, aimX + 0.04);
+			render();
+		}
+		if (event.code === 'Space') {
+			event.preventDefault();
+			dropCurrentFruit();
+		}
+	});
+
+	if (playfield && 'ResizeObserver' in window) {
+		const resizeObserver = new ResizeObserver(() => {
+			resizeCanvas();
+			render();
+		});
+		resizeObserver.observe(playfield);
+	}
+
+	for (const fruitId of state.queue) {
+		loadFruitImage(fruitId);
+	}
+	updateSoundIcon(getPreferences().soundEnabled);
+	renderScores();
+	renderStats();
+	render();
+</script>
+
+<style>
+	.fruit-rush {
+		width: 100%;
+		max-width: 640px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.85rem;
+		color: #e5ebf5;
+	}
+
+	.fruit-rush .hidden {
+		display: none !important;
+	}
+
+	.fruit-rush__hud {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem;
+		border: 2px solid #232d3d;
+		border-radius: 14px;
+		background: rgba(17, 22, 32, 0.92);
+	}
+
+	.fruit-rush__eyebrow,
+	.fruit-rush__stats,
+	.fruit-rush__status,
+	.fruit-rush__button {
+		font-family: ui-monospace, monospace;
+	}
+
+	.fruit-rush__eyebrow {
+		margin: 0 0 0.3rem 0;
+		color: #ff007f;
+		font-size: 0.72rem;
+		font-weight: 800;
+		letter-spacing: 0.14em;
+	}
+
+	.fruit-rush h2 {
+		margin: 0;
+		color: #00ff9f;
+		font-size: 1.2rem;
+	}
+
+	.fruit-rush__stats {
+		display: grid;
+		gap: 0.35rem;
+		color: #c2c9d6;
+		font-size: 0.82rem;
+		text-align: right;
+	}
+
+	.fruit-rush__stats strong {
+		color: #ffe600;
+	}
+
+	.fruit-rush__preview {
+		align-self: center;
+		width: 64px;
+		height: 64px;
+		display: grid;
+		place-items: center;
+		border: 2px solid #232d3d;
+		border-radius: 999px;
+		background: #111620;
+		box-shadow: 0 0 18px rgba(255, 230, 0, 0.16);
+	}
+
+	.fruit-rush__preview img {
+		width: 48px;
+		height: 48px;
+	}
+
+	.fruit-rush__playfield {
+		position: relative;
+		align-self: center;
+		width: min(100%, 420px);
+		aspect-ratio: 3 / 4;
+		height: clamp(320px, 64svh, 560px);
+		max-height: 64svh;
+		border: 3px solid #232d3d;
+		border-radius: 16px;
+		overflow: hidden;
+		background: #09111d;
+		touch-action: none;
+		box-shadow: inset 0 0 22px rgba(0, 240, 255, 0.1), 0 14px 28px rgba(0, 0, 0, 0.3);
+	}
+
+	.fruit-rush__canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.fruit-rush__danger-line {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 22%;
+		border-top: 2px dashed rgba(255, 0, 127, 0.85);
+		pointer-events: none;
+	}
+
+	.fruit-rush__aim {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 2px;
+		background: rgba(255, 230, 0, 0.9);
+		box-shadow: 0 0 12px rgba(255, 230, 0, 0.7);
+		transform: translateX(-50%);
+		pointer-events: none;
+	}
+
+	.fruit-rush__controls {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.fruit-rush__button {
+		flex: 1 1 180px;
+		border: 2px solid #232d3d;
+		background: #00ff9f;
+		color: #08111d;
+		padding: 0.8rem 1rem;
+		border-radius: 12px;
+		font-weight: 900;
+		letter-spacing: 0.08em;
+		cursor: pointer;
+	}
+
+	.fruit-rush__button--secondary {
+		background: #111620;
+		color: #e5ebf5;
+	}
+
+	.fruit-rush__button--danger {
+		flex: 0 0 auto;
+		background: #111620;
+		border-color: #7f1d1d;
+		color: #fecaca;
+		padding: 0.45rem 0.65rem;
+		font-size: 0.72rem;
+	}
+
+	.fruit-rush__button--danger:hover,
+	.fruit-rush__button--danger:focus-visible {
+		border-color: #ff007f;
+		color: #ff007f;
+	}
+
+	.fruit-rush__sound-control {
+		display: flex;
+		align-items: flex-start;
+	}
+
+	.fruit-rush__button--icon {
+		flex: 0 0 auto;
+		padding: 0.5rem 0.65rem;
+		font-size: 1.1rem;
+		line-height: 1;
+	}
+
+	.fruit-rush__button--icon.muted {
+		opacity: 0.55;
+	}
+
+	.fruit-rush__primary-button {
+		background: #00ff9f;
+		border-color: #00ff9f;
+		color: #090e16;
+		box-shadow: 0 0 12px rgba(0, 255, 159, 0.4);
+	}
+
+	.fruit-rush__primary-button:hover,
+	.fruit-rush__primary-button:focus-visible {
+		background: #00f0ff;
+		border-color: #00f0ff;
+		color: #090e16;
+		box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
+	}
+
+	.fruit-rush__button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.fruit-rush__button:not(:disabled):hover,
+	.fruit-rush__button:focus-visible {
+		border-color: #00f0ff;
+		outline: none;
+	}
+
+	.fruit-rush__button.fruit-rush__button--danger:not(:disabled):hover,
+	.fruit-rush__button.fruit-rush__button--danger:focus-visible {
+		border-color: #ff007f;
+		color: #ff007f;
+	}
+
+	.fruit-rush__status {
+		margin: 0;
+		color: #c2c9d6;
+		font-size: 0.82rem;
+		text-align: center;
+	}
+
+	.fruit-rush__modal-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(5, 8, 14, 0.85);
+		backdrop-filter: blur(4px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		padding: 1rem;
+		animation: fruitRushFadeIn 0.2s ease;
+	}
+
+	.fruit-rush__modal-card {
+		width: 100%;
+		max-width: 380px;
+		padding: 2rem;
+		background: #111620;
+		border: 2px solid #2a374a;
+		border-radius: 12px;
+		text-align: center;
+		box-shadow:
+			0 10px 30px rgba(0, 0, 0, 0.8),
+			0 0 20px rgba(0, 240, 255, 0.2);
+	}
+
+	.fruit-rush__modal-title {
+		margin: 0 0 0.5rem 0;
+		color: #ff007f;
+		font-family: ui-monospace, monospace;
+		font-size: 1.8rem;
+		font-weight: 900;
+		text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+	}
+
+	.fruit-rush__modal-subtitle {
+		margin: 0 0 1.5rem 0;
+		color: #94a3b8;
+		font-size: 0.9rem;
+	}
+
+	.fruit-rush__modal-stats {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin-bottom: 1.5rem;
+		padding: 1rem;
+		background: #0b0f16;
+		border: 1px solid #1c2736;
+		border-radius: 8px;
+		font-family: ui-monospace, monospace;
+	}
+
+	.fruit-rush .stat-row {
+		display: flex;
+		justify-content: space-between;
+		color: #cbd5e1;
+		font-size: 0.95rem;
+	}
+
+	.fruit-rush__modal-stats strong {
+		color: #00f0ff;
+	}
+
+	.fruit-rush__name-entry-row {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		margin-bottom: 1.5rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	.fruit-rush__name-entry-label {
+		color: #94a3b8;
+		font-size: 0.8rem;
+	}
+
+	.fruit-rush__name-entry-input {
+		background: #0b0f16;
+		border: 1px solid #232d3d;
+		border-radius: 6px;
+		color: #d1e4ff;
+		font-family: ui-monospace, monospace;
+		font-size: 0.95rem;
+		padding: 0.6rem 0.8rem;
+	}
+
+	.fruit-rush__name-entry-input:focus {
+		outline: none;
+		border-color: #00f0ff;
+		box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+	}
+
+	.fruit-rush__name-entry-input::placeholder {
+		color: #4b5563;
+	}
+
+	@keyframes fruitRushFadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@media (max-width: 560px) {
+		.fruit-rush__hud {
+			flex-direction: column;
+		}
+
+		.fruit-rush__stats {
+			text-align: left;
+		}
+
+		.fruit-rush__playfield {
+			width: min(100%, 360px);
+			height: clamp(280px, 56svh, 480px);
+			max-height: 56svh;
+		}
+	}
+</style>

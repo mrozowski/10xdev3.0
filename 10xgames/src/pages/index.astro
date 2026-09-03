@@ -1,6 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MemoryGame from '../components/game/MemoryGame.astro';
+import FruitRushGame from '../components/game/FruitRushGame.astro';
+import { GAME_CATALOGUE } from '../lib/catalog';
 ---
 
 <Layout title="10x Games — Retro Game Collection">
@@ -20,11 +22,13 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 					<h1 class="catalogue-heading">CHOOSE YOUR GAME</h1>
 				</div>
 				<div class="catalogue-grid">
-					<button class="game-card" type="button" data-game-launch="memory-cards" aria-label="Launch Memory Cards">
-						<span class="game-card-icon">🧠</span>
-						<span class="game-card-title">MEMORY CARDS</span>
-						<span class="game-card-subtitle">Match every pair before the timer runs out.</span>
-					</button>
+					{GAME_CATALOGUE.map((game) => (
+						<button class="game-card" type="button" data-game-launch={game.id} aria-label={`Launch ${game.title}`}>
+							<span class="game-card-icon">{game.icon}</span>
+							<span class="game-card-title">{game.title.toUpperCase()}</span>
+							<span class="game-card-subtitle">{game.description}</span>
+						</button>
+					))}
 				</div>
 			</section>
 
@@ -33,9 +37,14 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 					<button id="btn-back-to-catalogue" class="retro-btn secondary-btn" type="button">
 						← CATALOGUE
 					</button>
-					<h1 class="active-game-heading">MEMORY CARDS</h1>
+					<h1 class="active-game-heading" data-active-game-heading>MEMORY CARDS</h1>
 				</div>
-				<MemoryGame />
+				<div data-game-panel="memory-cards">
+					<MemoryGame />
+				</div>
+				<div data-game-panel="fruit-rush" hidden>
+					<FruitRushGame />
+				</div>
 			</section>
 		</main>
 
@@ -49,12 +58,16 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 
 <script>
 	import { recordPlatformTime } from '../lib/stats';
+	import { GAME_CATALOGUE } from '../lib/catalog';
 
 	const catalogueView = document.getElementById('catalogue-view');
 	const gameView = document.getElementById('game-view');
-	const launchButton = document.querySelector('[data-game-launch="memory-cards"]');
+	const launchButtons = document.querySelectorAll<HTMLButtonElement>('[data-game-launch]');
+	const gamePanels = document.querySelectorAll<HTMLElement>('[data-game-panel]');
 	const backButton = document.getElementById('btn-back-to-catalogue');
+	const activeGameHeading = document.querySelector<HTMLElement>('[data-active-game-heading]');
 	let lastPlatformFlush = Date.now();
+	let activeGameId = 'memory-cards';
 
 	function flushPlatformTime(): void {
 		const now = Date.now();
@@ -62,17 +75,36 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 		lastPlatformFlush = now;
 	}
 
-	function setView(view: 'catalogue' | 'game'): void {
+	function dispatchGameViewEvent(gameId: string, isOpen: boolean): void {
+		const prefix = gameId === 'memory-cards' ? 'memory-game' : gameId;
+		window.dispatchEvent(new CustomEvent(`${prefix}:view-${isOpen ? 'opened' : 'closed'}`));
+	}
+
+	function setActiveGame(gameId: string): void {
+		activeGameId = gameId;
+		const game = GAME_CATALOGUE.find((entry) => entry.id === gameId);
+		if (activeGameHeading && game) {
+			activeGameHeading.textContent = game.title.toUpperCase();
+		}
+		gamePanels.forEach((panel) => {
+			panel.hidden = panel.dataset.gamePanel !== gameId;
+		});
+	}
+
+	function setView(view: 'catalogue' | 'game', gameId: string = activeGameId): void {
 		if (!catalogueView || !gameView) {
 			return;
 		}
 
 		const isCatalogue = view === 'catalogue';
+		if (!isCatalogue) {
+			setActiveGame(gameId);
+		}
 		catalogueView.classList.toggle('hidden', !isCatalogue);
 		gameView.classList.toggle('hidden', isCatalogue);
 
 		flushPlatformTime();
-		window.dispatchEvent(new CustomEvent(isCatalogue ? 'memory-game:view-closed' : 'memory-game:view-opened'));
+		dispatchGameViewEvent(activeGameId, !isCatalogue);
 	}
 
 	window.addEventListener('pagehide', flushPlatformTime);
@@ -80,8 +112,13 @@ import MemoryGame from '../components/game/MemoryGame.astro';
 	window.addEventListener('memory-game:stats-cleared', () => {
 		lastPlatformFlush = Date.now();
 	});
+	window.addEventListener('fruit-rush:stats-cleared', () => {
+		lastPlatformFlush = Date.now();
+	});
 
-	launchButton?.addEventListener('click', () => setView('game'));
+	launchButtons.forEach((button) => {
+		button.addEventListener('click', () => setView('game', button.dataset.gameLaunch ?? 'memory-cards'));
+	});
 	backButton?.addEventListener('click', () => setView('catalogue'));
 </script>
 
