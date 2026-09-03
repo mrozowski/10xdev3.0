@@ -1,3 +1,7 @@
+---
+import '../../styles/local-data.css';
+---
+
 <section class="fruit-rush" data-fruit-rush-root aria-labelledby="fruit-rush-title">
 	<div class="fruit-rush__hud">
 		<div>
@@ -36,11 +40,121 @@
 	<p class="fruit-rush__status" data-fruit-rush-status aria-live="polite">
 		Move the aim line, then drop fruit into the container.
 	</p>
+
+	<section class="local-data-panel" aria-labelledby="fruit-rush-local-data-heading">
+		<div class="local-data-copy">
+			<h2 id="fruit-rush-local-data-heading" class="local-data-heading">LOCAL GAME DATA</h2>
+			<p>
+				Scores are stored only in this browser profile. Everyone using this profile can
+				view, rename, or clear them.
+			</p>
+		</div>
+
+		<div class="local-data-grid">
+			<section class="score-management-panel" aria-labelledby="fruit-rush-scores-heading">
+				<div class="panel-header">
+					<h3 id="fruit-rush-scores-heading" class="panel-heading">SCORES</h3>
+					<button
+						class="fruit-rush__button fruit-rush__button--danger"
+						type="button"
+						data-fruit-rush-clear-scores
+					>
+						CLEAR SCORES
+					</button>
+				</div>
+				<ul class="managed-score-list" data-fruit-rush-score-list aria-live="polite"></ul>
+			</section>
+
+			<section class="stats-panel" aria-labelledby="fruit-rush-stats-heading">
+				<div class="panel-header">
+					<h3 id="fruit-rush-stats-heading" class="panel-heading">LOCAL STATS</h3>
+					<button
+						class="fruit-rush__button fruit-rush__button--danger"
+						type="button"
+						data-fruit-rush-clear-stats
+					>
+						CLEAR STATS
+					</button>
+				</div>
+				<dl class="stats-list">
+					<div class="stat-row">
+						<dt>Platform time</dt>
+						<dd data-fruit-rush-stat-platform-time>0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Fruit Rush time</dt>
+						<dd data-fruit-rush-stat-game-time>0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Games played</dt>
+						<dd data-fruit-rush-stat-games-played>0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Total points</dt>
+						<dd data-fruit-rush-stat-total-points>0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Average points</dt>
+						<dd data-fruit-rush-stat-average-points>0</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Average game time</dt>
+						<dd data-fruit-rush-stat-average-time>0s</dd>
+					</div>
+					<div class="stat-row">
+						<dt>Last played</dt>
+						<dd data-fruit-rush-stat-last-played>Never</dd>
+					</div>
+				</dl>
+			</section>
+		</div>
+	</section>
+
+	<div class="fruit-rush__modal-overlay hidden" data-fruit-rush-modal role="dialog" aria-modal="true">
+		<div class="fruit-rush__modal-card">
+			<h2 class="fruit-rush__modal-title">GAME OVER!</h2>
+			<p class="fruit-rush__modal-subtitle">The fruit stack crossed the danger line.</p>
+
+			<div class="fruit-rush__modal-stats">
+				<div class="stat-row">
+					<span>Final Score:</span>
+					<strong data-fruit-rush-final-score>0</strong>
+				</div>
+			</div>
+
+			<div class="fruit-rush__name-entry-row">
+				<label for="fruit-rush-score-name-input" class="fruit-rush__name-entry-label">
+					Save score as:
+				</label>
+				<input
+					id="fruit-rush-score-name-input"
+					class="fruit-rush__name-entry-input"
+					type="text"
+					maxlength="24"
+					placeholder="Anonymous"
+					autocomplete="off"
+					data-fruit-rush-score-name
+				/>
+			</div>
+
+			<button class="fruit-rush__button fruit-rush__primary-button" type="button" data-fruit-rush-play-again>
+				PLAY AGAIN
+			</button>
+		</div>
+	</div>
 </section>
 
 <script>
-	import { addScore } from '../../lib/scores';
-	import { recordCompletedGame, recordGameOpened, recordGameTime } from '../../lib/stats';
+	import { addScore, clearScoresForGame, getScoresForGame } from '../../lib/scores';
+	import { renderManagedScores } from '../../lib/managed-scores';
+	import {
+		clearStats,
+		getGameStatsSummary,
+		getStats,
+		recordCompletedGame,
+		recordGameOpened,
+		recordGameTime,
+	} from '../../lib/stats';
 	import {
 		BOARD_MAX_X,
 		BOARD_MIN_X,
@@ -66,6 +180,20 @@
 	const statusNode = root?.querySelector<HTMLElement>('[data-fruit-rush-status]');
 	const dropButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-drop]');
 	const restartButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-restart]');
+	const clearScoresButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-clear-scores]');
+	const clearStatsButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-clear-stats]');
+	const scoreList = root?.querySelector<HTMLElement>('[data-fruit-rush-score-list]');
+	const modal = root?.querySelector<HTMLElement>('[data-fruit-rush-modal]');
+	const finalScoreNode = root?.querySelector<HTMLElement>('[data-fruit-rush-final-score]');
+	const scoreNameInput = root?.querySelector<HTMLInputElement>('[data-fruit-rush-score-name]');
+	const playAgainButton = root?.querySelector<HTMLButtonElement>('[data-fruit-rush-play-again]');
+	const statPlatformTime = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-platform-time]');
+	const statGameTime = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-game-time]');
+	const statGamesPlayed = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-games-played]');
+	const statTotalPoints = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-total-points]');
+	const statAveragePoints = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-average-points]');
+	const statAverageTime = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-average-time]');
+	const statLastPlayed = root?.querySelector<HTMLElement>('[data-fruit-rush-stat-last-played]');
 	const context = canvas?.getContext('2d');
 	const fruitImages = new Map<string, HTMLImageElement>();
 
@@ -77,6 +205,7 @@
 	let persistedGameOver = false;
 	let aimX = 0.5;
 	let isOpen = false;
+	let pendingScore: number | null = null;
 
 	function loadFruitImage(fruitId: string): HTMLImageElement {
 		const existing = fruitImages.get(fruitId);
@@ -124,6 +253,115 @@
 			context.drawImage(image, x - radius, y - radius, radius * 2, radius * 2);
 		}
 		context.restore();
+	}
+
+	function renderScores(highlightId?: string): void {
+		if (!scoreList) {
+			return;
+		}
+
+		renderManagedScores({
+			gameId: GAME_ID,
+			gameLabel: 'Fruit Rush',
+			listElement: scoreList,
+			highlightId,
+			getMeta: (score) => `Played: ${formatDate(score.date)}`,
+		});
+	}
+
+	function formatDate(date: string): string {
+		const parsed = new Date(date);
+		if (Number.isNaN(parsed.getTime())) {
+			return 'Unknown date';
+		}
+
+		return parsed.toLocaleDateString(undefined, {
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+	}
+
+	function formatDuration(durationMs: number): string {
+		const seconds = Math.floor(durationMs / 1000);
+		if (seconds < 60) {
+			return `${seconds}s`;
+		}
+
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = seconds % 60;
+		return `${minutes}m ${remainingSeconds}s`;
+	}
+
+	function renderStats(): void {
+		const stats = getStats();
+		const gameStats = getGameStatsSummary(GAME_ID);
+
+		if (statPlatformTime) {
+			statPlatformTime.textContent = formatDuration(stats.totalPlatformTimeMs);
+		}
+		if (statGameTime) {
+			statGameTime.textContent = formatDuration(gameStats.totalPlayTimeMs);
+		}
+		if (statGamesPlayed) {
+			statGamesPlayed.textContent = String(gameStats.gamesPlayed);
+		}
+		if (statTotalPoints) {
+			statTotalPoints.textContent = String(gameStats.totalPoints);
+		}
+		if (statAveragePoints) {
+			statAveragePoints.textContent = String(Math.round(gameStats.averagePoints));
+		}
+		if (statAverageTime) {
+			statAverageTime.textContent = formatDuration(gameStats.averagePlayTimeMs);
+		}
+		if (statLastPlayed) {
+			statLastPlayed.textContent =
+				gameStats.lastPlayedAt === null ? 'Never' : formatDate(gameStats.lastPlayedAt);
+		}
+	}
+
+	function flushGameTime(): void {
+		if (openStartedAt <= 0) {
+			return;
+		}
+
+		const now = Date.now();
+		recordGameTime(GAME_ID, now - openStartedAt);
+		openStartedAt = now;
+		renderStats();
+	}
+
+	function showGameOverModal(): void {
+		if (finalScoreNode) {
+			finalScoreNode.textContent = String(state.score);
+		}
+		if (scoreNameInput) {
+			scoreNameInput.value = '';
+		}
+		modal?.classList.remove('hidden');
+		scoreNameInput?.focus();
+	}
+
+	function hideGameOverModal(): void {
+		modal?.classList.add('hidden');
+	}
+
+	function savePendingScore(): void {
+		if (pendingScore === null) {
+			return;
+		}
+
+		const existingIds = new Set(getScoresForGame(GAME_ID).map(({ id }) => id));
+		const savedScores = addScore({
+			gameId: GAME_ID,
+			name: scoreNameInput?.value.trim(),
+			score: pendingScore,
+		});
+		const newEntryId = savedScores.find(({ id }) => !existingIds.has(id))?.id;
+		pendingScore = null;
+		renderScores(newEntryId);
 	}
 
 	function render(): void {
@@ -199,8 +437,11 @@
 
 		if (state.status === 'game-over' && !persistedGameOver) {
 			persistedGameOver = true;
-			addScore({ gameId: GAME_ID, score: state.score });
+			pendingScore = state.score;
+			flushGameTime();
 			recordCompletedGame(GAME_ID, state.score);
+			renderStats();
+			showGameOverModal();
 		}
 	}
 
@@ -235,6 +476,7 @@
 		isOpen = true;
 		openStartedAt = Date.now();
 		recordGameOpened(GAME_ID);
+		renderStats();
 		resizeCanvas();
 		await ensureAdapter();
 		restart();
@@ -249,16 +491,16 @@
 
 		isOpen = false;
 		window.cancelAnimationFrame(rafId);
-		if (openStartedAt > 0) {
-			recordGameTime(GAME_ID, Date.now() - openStartedAt);
-		}
+		flushGameTime();
 		openStartedAt = 0;
 	}
 
 	function restart(): void {
 		state = resetGame(state);
 		persistedGameOver = false;
+		pendingScore = null;
 		aimX = 0.5;
+		hideGameOverModal();
 		rebuildPhysicsFromState();
 		render();
 	}
@@ -305,6 +547,30 @@
 	});
 	dropButton?.addEventListener('click', dropCurrentFruit);
 	restartButton?.addEventListener('click', restart);
+	clearScoresButton?.addEventListener('click', () => {
+		if (!window.confirm('Clear all Fruit Rush scores stored in this browser profile?')) {
+			return;
+		}
+
+		clearScoresForGame(GAME_ID);
+		renderScores();
+	});
+	clearStatsButton?.addEventListener('click', () => {
+		if (!window.confirm('Clear local stats stored in this browser profile?')) {
+			return;
+		}
+
+		clearStats();
+		if (openStartedAt > 0) {
+			openStartedAt = Date.now();
+		}
+		window.dispatchEvent(new CustomEvent('fruit-rush:stats-cleared'));
+		renderStats();
+	});
+	playAgainButton?.addEventListener('click', () => {
+		savePendingScore();
+		restart();
+	});
 	window.addEventListener('keydown', (event) => {
 		if (!isOpen) {
 			return;
@@ -337,6 +603,8 @@
 	for (const fruitId of state.queue) {
 		loadFruitImage(fruitId);
 	}
+	renderScores();
+	renderStats();
 	render();
 </script>
 
@@ -348,6 +616,10 @@
 		flex-direction: column;
 		gap: 0.85rem;
 		color: #e5ebf5;
+	}
+
+	.fruit-rush .hidden {
+		display: none !important;
 	}
 
 	.fruit-rush__hud {
@@ -475,6 +747,36 @@
 		color: #e5ebf5;
 	}
 
+	.fruit-rush__button--danger {
+		flex: 0 0 auto;
+		background: #111620;
+		border-color: #7f1d1d;
+		color: #fecaca;
+		padding: 0.45rem 0.65rem;
+		font-size: 0.72rem;
+	}
+
+	.fruit-rush__button--danger:hover,
+	.fruit-rush__button--danger:focus-visible {
+		border-color: #ff007f;
+		color: #ff007f;
+	}
+
+	.fruit-rush__primary-button {
+		background: #00ff9f;
+		border-color: #00ff9f;
+		color: #090e16;
+		box-shadow: 0 0 12px rgba(0, 255, 159, 0.4);
+	}
+
+	.fruit-rush__primary-button:hover,
+	.fruit-rush__primary-button:focus-visible {
+		background: #00f0ff;
+		border-color: #00f0ff;
+		color: #090e16;
+		box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
+	}
+
 	.fruit-rush__button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
@@ -486,11 +788,123 @@
 		outline: none;
 	}
 
+	.fruit-rush__button.fruit-rush__button--danger:not(:disabled):hover,
+	.fruit-rush__button.fruit-rush__button--danger:focus-visible {
+		border-color: #ff007f;
+		color: #ff007f;
+	}
+
 	.fruit-rush__status {
 		margin: 0;
 		color: #c2c9d6;
 		font-size: 0.82rem;
 		text-align: center;
+	}
+
+	.fruit-rush__modal-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(5, 8, 14, 0.85);
+		backdrop-filter: blur(4px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		padding: 1rem;
+		animation: fruitRushFadeIn 0.2s ease;
+	}
+
+	.fruit-rush__modal-card {
+		width: 100%;
+		max-width: 380px;
+		padding: 2rem;
+		background: #111620;
+		border: 2px solid #2a374a;
+		border-radius: 12px;
+		text-align: center;
+		box-shadow:
+			0 10px 30px rgba(0, 0, 0, 0.8),
+			0 0 20px rgba(0, 240, 255, 0.2);
+	}
+
+	.fruit-rush__modal-title {
+		margin: 0 0 0.5rem 0;
+		color: #ff007f;
+		font-family: ui-monospace, monospace;
+		font-size: 1.8rem;
+		font-weight: 900;
+		text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+	}
+
+	.fruit-rush__modal-subtitle {
+		margin: 0 0 1.5rem 0;
+		color: #94a3b8;
+		font-size: 0.9rem;
+	}
+
+	.fruit-rush__modal-stats {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin-bottom: 1.5rem;
+		padding: 1rem;
+		background: #0b0f16;
+		border: 1px solid #1c2736;
+		border-radius: 8px;
+		font-family: ui-monospace, monospace;
+	}
+
+	.fruit-rush .stat-row {
+		display: flex;
+		justify-content: space-between;
+		color: #cbd5e1;
+		font-size: 0.95rem;
+	}
+
+	.fruit-rush__modal-stats strong {
+		color: #00f0ff;
+	}
+
+	.fruit-rush__name-entry-row {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		margin-bottom: 1.5rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	.fruit-rush__name-entry-label {
+		color: #94a3b8;
+		font-size: 0.8rem;
+	}
+
+	.fruit-rush__name-entry-input {
+		background: #0b0f16;
+		border: 1px solid #232d3d;
+		border-radius: 6px;
+		color: #d1e4ff;
+		font-family: ui-monospace, monospace;
+		font-size: 0.95rem;
+		padding: 0.6rem 0.8rem;
+	}
+
+	.fruit-rush__name-entry-input:focus {
+		outline: none;
+		border-color: #00f0ff;
+		box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+	}
+
+	.fruit-rush__name-entry-input::placeholder {
+		color: #4b5563;
+	}
+
+	@keyframes fruitRushFadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	@media (max-width: 560px) {

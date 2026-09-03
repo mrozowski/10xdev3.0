@@ -112,6 +112,9 @@ import { GAME_CATALOGUE } from '../lib/catalog';
 	window.addEventListener('memory-game:stats-cleared', () => {
 		lastPlatformFlush = Date.now();
 	});
+	window.addEventListener('fruit-rush:stats-cleared', () => {
+		lastPlatformFlush = Date.now();
+	});
 
 	launchButtons.forEach((button) => {
 		button.addEventListener('click', () => setView('game', button.dataset.gameLaunch ?? 'memory-cards'));

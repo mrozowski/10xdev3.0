@@ -170,11 +170,9 @@ const preferences = getPreferences();
 	import {
 		addScore,
 		clearScoresForGame,
-		deleteScore,
 		getScoresForGame,
-		renameScore,
-		type ScoreEntry,
 	} from '../../lib/scores';
+	import { renderManagedScores } from '../../lib/managed-scores';
 	import {
 		clearStats,
 		getGameStatsSummary,
@@ -627,129 +625,13 @@ const preferences = getPreferences();
 		}
 
 		private renderScores(highlightId?: string): void {
-			this.scoreList.replaceChildren();
-			const scores = getScoresForGame(MEMORY_GAME_ID);
-
-			if (scores.length === 0) {
-				const emptyState = document.createElement('li');
-				emptyState.className = 'managed-score-empty';
-				emptyState.textContent = 'No Memory Cards scores yet.';
-				this.scoreList.appendChild(emptyState);
-				return;
-			}
-
-			scores.forEach((score, index) => {
-				this.scoreList.appendChild(this.createScoreRow(score, index, highlightId));
+			renderManagedScores({
+				gameId: MEMORY_GAME_ID,
+				gameLabel: 'Memory Cards',
+				listElement: this.scoreList,
+				highlightId,
+				getMeta: (score) => `Completed: ${score.roundsCompleted ?? 0} • ${this.formatDate(score.date)}`,
 			});
-		}
-
-		private createScoreRow(score: ScoreEntry, index: number, highlightId?: string): HTMLLIElement {
-			const row = document.createElement('li');
-			row.className = 'managed-score-row';
-			row.dataset.scoreId = score.id;
-			if (highlightId === score.id) {
-				row.classList.add('newly-saved');
-			}
-
-			const details = document.createElement('div');
-			details.className = 'managed-score-details';
-
-			const primary = document.createElement('div');
-			primary.className = 'managed-score-primary';
-
-			const rank = document.createElement('span');
-			rank.className = 'managed-score-rank';
-			rank.textContent = `#${index + 1}`;
-
-			const name = document.createElement('span');
-			name.className = 'managed-score-name';
-			name.textContent = score.name;
-
-			const points = document.createElement('span');
-			points.className = 'managed-score-points';
-			points.textContent = `${score.score} pts`;
-
-			primary.append(rank, name, points);
-
-			const meta = document.createElement('div');
-			meta.className = 'managed-score-meta';
-			meta.textContent = `Completed: ${score.roundsCompleted ?? 0} • ${this.formatDate(score.date)}`;
-
-			details.append(primary, meta);
-
-			const actions = document.createElement('div');
-			actions.className = 'managed-score-actions';
-
-			const renameButton = document.createElement('button');
-			renameButton.className = 'retro-btn compact-btn';
-			renameButton.type = 'button';
-			renameButton.textContent = 'RENAME';
-			renameButton.setAttribute('aria-label', `Rename score for ${score.name}`);
-			renameButton.addEventListener('click', () => this.renderRenameScoreRow(score));
-
-			const deleteButton = document.createElement('button');
-			deleteButton.className = 'retro-btn compact-btn danger-btn';
-			deleteButton.type = 'button';
-			deleteButton.textContent = 'DELETE';
-			deleteButton.setAttribute('aria-label', `Delete score for ${score.name}`);
-			deleteButton.addEventListener('click', () => {
-				if (!window.confirm(`Delete ${score.name}'s Memory Cards score?`)) {
-					return;
-				}
-
-				deleteScore(MEMORY_GAME_ID, score.id);
-				this.renderScores();
-			});
-
-			actions.append(renameButton, deleteButton);
-			row.append(details, actions);
-			return row;
-		}
-
-		private renderRenameScoreRow(score: ScoreEntry): void {
-			const rows = Array.from(this.scoreList.querySelectorAll<HTMLLIElement>('.managed-score-row'));
-			const row = rows.find((candidate) => candidate.dataset.scoreId === score.id);
-
-			if (!row) {
-				return;
-			}
-
-			row.replaceChildren();
-			row.classList.add('editing');
-
-			const label = document.createElement('label');
-			label.className = 'managed-score-edit-label';
-			label.textContent = 'Score label';
-
-			const input = document.createElement('input');
-			input.className = 'managed-score-input';
-			input.type = 'text';
-			input.maxLength = 24;
-			input.value = score.name;
-			input.setAttribute('aria-label', `New name for ${score.name}`);
-
-			const actions = document.createElement('div');
-			actions.className = 'managed-score-actions';
-
-			const saveButton = document.createElement('button');
-			saveButton.className = 'retro-btn compact-btn';
-			saveButton.type = 'button';
-			saveButton.textContent = 'SAVE';
-			saveButton.addEventListener('click', () => {
-				renameScore(MEMORY_GAME_ID, score.id, input.value);
-				this.renderScores(score.id);
-			});
-
-			const cancelButton = document.createElement('button');
-			cancelButton.className = 'retro-btn compact-btn secondary-action-btn';
-			cancelButton.type = 'button';
-			cancelButton.textContent = 'CANCEL';
-			cancelButton.addEventListener('click', () => this.renderScores());
-
-			actions.append(saveButton, cancelButton);
-			row.append(label, input, actions);
-			input.focus();
-			input.select();
 		}
 
 		private renderStats(): void {
