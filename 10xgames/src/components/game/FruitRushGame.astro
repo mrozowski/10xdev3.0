@@ -263,7 +263,7 @@ import '../../styles/local-data.css';
 		context.arc(x, y, radius, 0, Math.PI * 2);
 		context.fillStyle = fruit.color;
 		context.fill();
-		if (image.complete) {
+		if (image.complete && image.naturalWidth > 0) {
 			context.drawImage(image, x - radius, y - radius, radius * 2, radius * 2);
 		}
 		context.restore();
@@ -476,12 +476,19 @@ import '../../styles/local-data.css';
 			return;
 		}
 
-		const elapsed = Math.min(64, now - lastFrameAt || 16);
-		lastFrameAt = now;
-		adapter.step(elapsed);
-		syncResolvedState(adapter.getSnapshots(), elapsed);
-		render();
-		rafId = window.requestAnimationFrame(frame);
+		try {
+			const elapsed = Math.min(64, now - lastFrameAt || 16);
+			lastFrameAt = now;
+			adapter.step(elapsed);
+			syncResolvedState(adapter.getSnapshots(), elapsed);
+			render();
+		} catch (error) {
+			// Never let a single bad frame (e.g. a rendering error) permanently
+			// stall the game loop; log it and keep the animation alive.
+			console.error('Fruit Rush frame error:', error);
+		} finally {
+			rafId = window.requestAnimationFrame(frame);
+		}
 	}
 
 	async function ensureAdapter(): Promise<FruitRushPhysicsAdapter> {

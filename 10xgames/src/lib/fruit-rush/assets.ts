@@ -6,11 +6,11 @@ export interface FruitAsset {
 	src: string;
 }
 
-const BASE_PATH = import.meta.env.BASE_URL;
+const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export const FRUIT_ASSETS: readonly FruitAsset[] = FRUIT_ORDER.map((id) => ({
 	id,
-	src: `${BASE_PATH}fruit-rush/${id}.svg`,
+	src: `${BASE_PATH}/fruit-rush/${id}.svg`,
 }));
 
 export const FRUIT_ASSET_BY_ID = Object.fromEntries(
