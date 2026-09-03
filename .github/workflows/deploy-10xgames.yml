@@ -50,17 +50,6 @@ jobs:
       - name: Build Astro site
         run: npm run build
 
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/master'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -69,6 +58,14 @@ jobs:
         with:
           path: ./10xgames/dist
 
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/master'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
